@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Bell, X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useDatabase } from '../context/DatabaseContext';
 
 const NotificationCenter: React.FC = () => {
-  const { state, dispatch } = useApp();
+  const { state, actions } = useDatabase();
   const [isOpen, setIsOpen] = useState(false);
   const unreadCount = state.notifications.filter(n => !n.read).length;
 
@@ -26,7 +26,7 @@ const NotificationCenter: React.FC = () => {
   };
 
   const markAsRead = (id: string) => {
-    dispatch({ type: 'MARK_NOTIFICATION_READ', payload: id });
+    actions.markNotificationAsRead(id);
   };
 
   return (

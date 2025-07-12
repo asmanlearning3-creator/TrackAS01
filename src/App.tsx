@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AppProvider } from './context/AppContext';
+import { DatabaseProvider } from './context/DatabaseContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -61,7 +61,7 @@ function App() {
   }
 
   return (
-    <AppProvider>
+    <DatabaseProvider>
       <div className="min-h-screen bg-gray-50">
         <Header 
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -89,7 +89,7 @@ function App() {
           />
         )}
       </div>
-    </AppProvider>
+    </DatabaseProvider>
   );
 }
 
