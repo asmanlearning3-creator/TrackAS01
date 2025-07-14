@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { DatabaseProvider } from './context/DatabaseContext';
-import { DatabaseProvider } from './context/DatabaseContext';
+import { AppProvider } from './context/AppContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -53,7 +52,7 @@ function App() {
       case 'operational-flow':
         return <OperationalFlow />;
       default:
-        return <Dashboard userRole={userRole!} />;
+        return <Dashboard userRole={userRole!} onTabChange={handleTabChange} />;
     }
   };
 
@@ -62,18 +61,12 @@ function App() {
   }
 
   return (
-    <DatabaseProvider 
-      userId="demo-user-id" 
-      userType={userRole === 'logistics' ? 'company' : userRole}
-      companyId={userRole === 'logistics' ? 'demo-company-id' : undefined}
-    >
+    <AppProvider>
       <div className="min-h-screen bg-gray-50">
         <Header 
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-            onTabChange={handleTabChange}
-            userRole={userRole}
-          />
-          
+          userRole={userRole}
+        />
         
         <div className="flex">
           <Sidebar 
@@ -96,7 +89,7 @@ function App() {
           />
         )}
       </div>
-    </DatabaseProvider>
+    </AppProvider>
   );
 }
 

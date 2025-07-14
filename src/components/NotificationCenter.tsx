@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { Bell, X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import { useDatabase } from '../context/DatabaseContext';
+import { useApp } from '../context/AppContext';
 
 const NotificationCenter: React.FC = () => {
-  const { 
-    notifications, 
-    unreadCount, 
-    markNotificationAsRead, 
-    markAllNotificationsAsRead,
-    notificationsLoading 
-  } = useDatabase();
+  const { state, dispatch } = useApp();
   const [isOpen, setIsOpen] = useState(false);
 
   const getIcon = (type: string) => {
@@ -30,20 +24,8 @@ const NotificationCenter: React.FC = () => {
     }
   };
 
-  const handleMarkAsRead = async (id: string) => {
-    try {
-      await markNotificationAsRead(id);
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-    }
-  };
-
-  const handleMarkAllAsRead = async () => {
-    try {
-      await markAllNotificationsAsRead();
-    } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
-    }
+  const handleMarkAsRead = (id: string) => {
+    dispatch({ type: 'MARK_NOTIFICATION_READ', payload: id });
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -59,6 +41,8 @@ const NotificationCenter: React.FC = () => {
     const days = Math.floor(hours / 24);
     return `${days}d ago`;
   };
+
+  const unreadCount = state.notifications.filter(n => !n.read).length;
 
   return (
     <div className="relative">
@@ -89,40 +73,25 @@ const NotificationCenter: React.FC = () => {
                     <span className="ml-2 text-sm text-gray-500">({unreadCount} unread)</span>
                   )}
                 </h3>
-                <div className="flex items-center space-x-2">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={handleMarkAllAsRead}
-                      className="text-xs text-blue-600 hover:text-blue-800"
-                    >
-                      Mark all read
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setIsOpen(false)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
             </div>
             
             <div className="max-h-80 overflow-y-auto">
-              {notificationsLoading ? (
-                <div className="p-4 text-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="text-sm text-gray-500 mt-2">Loading notifications...</p>
-                </div>
-              ) : notifications.length === 0 ? (
+              {state.notifications.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">
                   <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
                   <p>No notifications</p>
                 </div>
               ) : (
-                notifications.map((notification) => {
+                state.notifications.map((notification) => {
                   const Icon = getIcon(notification.type);
-                  const isUnread = !notification.read_at;
+                  const isUnread = !notification.read;
                   
                   return (
                     <div
@@ -142,7 +111,7 @@ const NotificationCenter: React.FC = () => {
                             {notification.message}
                           </p>
                           <p className="text-xs text-gray-400 mt-2">
-                            {formatTimestamp(notification.created_at)}
+                            {formatTimestamp(notification.timestamp)}
                           </p>
                         </div>
                         {isUnread && (
@@ -155,7 +124,7 @@ const NotificationCenter: React.FC = () => {
               )}
             </div>
             
-            {notifications.length > 0 && (
+            {state.notifications.length > 0 && (
               <div className="p-3 border-t border-gray-200 bg-gray-50">
                 <button className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium">
                   View all notifications

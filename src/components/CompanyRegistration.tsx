@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Building2, FileText, User, Phone, Mail, MapPin, Hash, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import { useDatabase } from '../context/DatabaseContext';
-import LoadingSpinner from './LoadingSpinner';
+import { useApp } from '../context/AppContext';
 
 const CompanyRegistration: React.FC = () => {
-  const { createCompany, createNotification } = useDatabase();
+  const { dispatch } = useApp();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -83,23 +82,19 @@ const CompanyRegistration: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const newCompany = {
-        name: formData.companyName,
-        address: formData.companyAddress,
-        tin: formData.tin,
-        business_registration_number: formData.businessRegistrationNumber,
-        primary_contact_name: formData.primaryContactName,
-        primary_contact_email: formData.primaryContactEmail,
-        primary_contact_phone: formData.primaryContactPhone,
-        fleet_size: formData.fleetSize ? parseInt(formData.fleetSize) : null,
-      };
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      const createdCompany = await createCompany(newCompany);
-
-      await createNotification({
-        type: 'success',
-        title: 'Registration Submitted',
-        message: `Company registration for ${createdCompany.name} submitted successfully. You will receive updates within 24-48 hours.`,
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        payload: {
+          id: `NOT-${Date.now()}`,
+          type: 'success',
+          title: 'Registration Submitted',
+          message: `Company registration for ${formData.companyName} submitted successfully. You will receive updates within 24-48 hours.`,
+          timestamp: 'Just now',
+          read: false
+        }
       });
 
       setFormData({
@@ -114,10 +109,16 @@ const CompanyRegistration: React.FC = () => {
       });
       setCurrentStep(4);
     } catch (error: any) {
-      await createNotification({
-        type: 'error',
-        title: 'Registration Failed',
-        message: error.message || 'Failed to submit company registration. Please try again.',
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        payload: {
+          id: `NOT-${Date.now()}`,
+          type: 'error',
+          title: 'Registration Failed',
+          message: 'Failed to submit company registration. Please try again.',
+          timestamp: 'Just now',
+          read: false
+        }
       });
     } finally {
       setIsSubmitting(false);
@@ -468,7 +469,7 @@ const CompanyRegistration: React.FC = () => {
             >
               {isSubmitting ? (
                 <>
-                  <LoadingSpinner size="sm" text="" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span>Submitting...</span>
                 </>
               ) : (
