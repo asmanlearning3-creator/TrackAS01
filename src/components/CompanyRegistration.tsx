@@ -4,7 +4,7 @@ import { useDatabase } from '../context/DatabaseContext';
 import LoadingSpinner from './LoadingSpinner';
 
 const CompanyRegistration: React.FC = () => {
-  const { actions } = useDatabase();
+  const { createCompany, createNotification } = useDatabase();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -94,9 +94,9 @@ const CompanyRegistration: React.FC = () => {
         fleet_size: formData.fleetSize ? parseInt(formData.fleetSize) : null,
       };
 
-      const createdCompany = await actions.createCompany(newCompany);
+      const createdCompany = await createCompany(newCompany);
 
-      await actions.createNotification({
+      await createNotification({
         type: 'success',
         title: 'Registration Submitted',
         message: `Company registration for ${createdCompany.name} submitted successfully. You will receive updates within 24-48 hours.`,
@@ -114,7 +114,7 @@ const CompanyRegistration: React.FC = () => {
       });
       setCurrentStep(4);
     } catch (error: any) {
-      await actions.createNotification({
+      await createNotification({
         type: 'error',
         title: 'Registration Failed',
         message: error.message || 'Failed to submit company registration. Please try again.',

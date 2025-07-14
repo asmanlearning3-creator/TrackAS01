@@ -2,6 +2,7 @@ import React from 'react';
 import { Menu } from 'lucide-react';
 import NotificationCenter from './NotificationCenter';
 import ConnectionStatus from './ConnectionStatus';
+import ConnectionStatus from './ConnectionStatus';
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -45,6 +46,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <ConnectionStatus />
             <ConnectionStatus />
             <NotificationCenter />
             

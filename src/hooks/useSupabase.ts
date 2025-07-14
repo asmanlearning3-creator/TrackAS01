@@ -1,364 +1,448 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import * as api from '../services/api';
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '../services/api';
 
-// Custom hook for companies
-export const useCompanies = () => {
-  const [companies, setCompanies] = useState<any[]>([]);
+// Generic hook for API operations
+function useAPI<T>(
+  apiCall: () => Promise<T>,
+  dependencies: any[] = []
+) {
+  const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCompanies = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.companyAPI.getAll();
-      setCompanies(data || []);
       setError(null);
+      const result = await apiCall();
+      setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch companies');
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }
+  }, dependencies);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch: fetchData,
+    setData
   };
+}
+
+// Companies hook
+export const useCompanies = () => {
+  const { data: companies, loading, error, refetch, setData } = useAPI(
+    () => api.companies.getAll(),
+    []
+  );
 
   const createCompany = async (company: any) => {
     try {
-      const newCompany = await api.companyAPI.create(company);
-      setCompanies(prev => [newCompany, ...prev]);
+      const newCompany = await api.companies.create(company);
+      setData(prev => prev ? [newCompany, ...prev] : [newCompany]);
       return newCompany;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create company');
       throw err;
     }
   };
 
   const updateCompanyStatus = async (id: string, status: any, rejectionReason?: string) => {
     try {
-      const updatedCompany = await api.companyAPI.updateStatus(id, status, rejectionReason);
-      setCompanies(prev => prev.map(c => c.id === id ? updatedCompany : c));
+      const updatedCompany = await api.companies.updateStatus(id, status, rejectionReason);
+      setData(prev => prev ? prev.map(c => c.id === id ? updatedCompany : c) : []);
       return updatedCompany;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update company');
       throw err;
     }
   };
 
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
-
   return {
-    companies,
+    companies: companies || [],
     loading,
     error,
-    refetch: fetchCompanies,
+    refetch,
     createCompany,
     updateCompanyStatus
   };
 };
 
-// Custom hook for vehicles
+// Vehicles hook
 export const useVehicles = () => {
-  const [vehicles, setVehicles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchVehicles = async () => {
-    try {
-      setLoading(true);
-      const data = await api.vehicleAPI.getAll();
-      setVehicles(data || []);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch vehicles');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: vehicles, loading, error, refetch, setData } = useAPI(
+    () => api.vehicles.getAll(),
+    []
+  );
 
   const createVehicle = async (vehicle: any) => {
     try {
-      const newVehicle = await api.vehicleAPI.create(vehicle);
-      setVehicles(prev => [newVehicle, ...prev]);
+      const newVehicle = await api.vehicles.create(vehicle);
+      setData(prev => prev ? [newVehicle, ...prev] : [newVehicle]);
       return newVehicle;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create vehicle');
       throw err;
     }
   };
 
   const updateVehicleStatus = async (id: string, status: any) => {
     try {
-      const updatedVehicle = await api.vehicleAPI.updateStatus(id, status);
-      setVehicles(prev => prev.map(v => v.id === id ? updatedVehicle : v));
+      const updatedVehicle = await api.vehicles.updateStatus(id, status);
+      setData(prev => prev ? prev.map(v => v.id === id ? updatedVehicle : v) : []);
       return updatedVehicle;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update vehicle');
       throw err;
     }
   };
 
-  useEffect(() => {
-    fetchVehicles();
-  }, []);
-
-  return {
-    vehicles,
-    loading,
-    error,
-    refetch: fetchVehicles,
-    createVehicle,
-    updateVehicleStatus
-  };
-};
-
-// Custom hook for shipments
-export const useShipments = () => {
-  const [shipments, setShipments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchShipments = async () => {
+  const updateVehicleLocation = async (id: string, lat: number, lng: number, address?: string) => {
     try {
-      setLoading(true);
-      const data = await api.shipmentAPI.getAll();
-      setShipments(data || []);
-      setError(null);
+      const updatedVehicle = await api.vehicles.updateLocation(id, lat, lng, address);
+      setData(prev => prev ? prev.map(v => v.id === id ? updatedVehicle : v) : []);
+      return updatedVehicle;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch shipments');
-    } finally {
-      setLoading(false);
+      throw err;
     }
   };
 
+  return {
+    vehicles: vehicles || [],
+    loading,
+    error,
+    refetch,
+    createVehicle,
+    updateVehicleStatus,
+    updateVehicleLocation
+  };
+};
+
+// Operators hook
+export const useOperators = () => {
+  const { data: operators, loading, error, refetch, setData } = useAPI(
+    () => api.operators.getAll(),
+    []
+  );
+
+  const updateOperatorStatus = async (id: string, status: any) => {
+    try {
+      const updatedOperator = await api.operators.updateStatus(id, status);
+      setData(prev => prev ? prev.map(o => o.id === id ? updatedOperator : o) : []);
+      return updatedOperator;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updateOperatorLocation = async (id: string, lat: number, lng: number, address?: string) => {
+    try {
+      const updatedOperator = await api.operators.updateLocation(id, lat, lng, address);
+      setData(prev => prev ? prev.map(o => o.id === id ? updatedOperator : o) : []);
+      return updatedOperator;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updateOperatorPerformance = async (id: string, deliverySuccess: boolean, onTime: boolean) => {
+    try {
+      const updatedOperator = await api.operators.updatePerformance(id, deliverySuccess, onTime);
+      setData(prev => prev ? prev.map(o => o.id === id ? updatedOperator : o) : []);
+      return updatedOperator;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  return {
+    operators: operators || [],
+    loading,
+    error,
+    refetch,
+    updateOperatorStatus,
+    updateOperatorLocation,
+    updateOperatorPerformance
+  };
+};
+
+// Customers hook
+export const useCustomers = () => {
+  const { data: customers, loading, error, refetch, setData } = useAPI(
+    () => api.customers.getAll(),
+    []
+  );
+
+  const createCustomer = async (customer: any) => {
+    try {
+      const newCustomer = await api.customers.create(customer);
+      setData(prev => prev ? [newCustomer, ...prev] : [newCustomer]);
+      return newCustomer;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const upsertCustomer = async (customer: any) => {
+    try {
+      const upsertedCustomer = await api.customers.upsert(customer);
+      setData(prev => {
+        if (!prev) return [upsertedCustomer];
+        const existingIndex = prev.findIndex(c => c.phone === customer.phone);
+        if (existingIndex >= 0) {
+          const updated = [...prev];
+          updated[existingIndex] = upsertedCustomer;
+          return updated;
+        }
+        return [upsertedCustomer, ...prev];
+      });
+      return upsertedCustomer;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  return {
+    customers: customers || [],
+    loading,
+    error,
+    refetch,
+    createCustomer,
+    upsertCustomer
+  };
+};
+
+// Shipments hook with real-time updates
+export const useShipments = () => {
+  const { data: shipments, loading, error, refetch, setData } = useAPI(
+    () => api.shipments.getAll(),
+    []
+  );
+
   const createShipment = async (shipment: any) => {
     try {
-      const newShipment = await api.shipmentAPI.create(shipment);
-      setShipments(prev => [newShipment, ...prev]);
+      const newShipment = await api.shipments.create(shipment);
+      setData(prev => prev ? [newShipment, ...prev] : [newShipment]);
       return newShipment;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create shipment');
       throw err;
     }
   };
 
   const updateShipment = async (id: string, updates: any) => {
     try {
-      const updatedShipment = await api.shipmentAPI.update(id, updates);
-      setShipments(prev => prev.map(s => s.id === id ? updatedShipment : s));
+      const updatedShipment = await api.shipments.update(id, updates);
+      setData(prev => prev ? prev.map(s => s.id === id ? updatedShipment : s) : []);
       return updatedShipment;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update shipment');
       throw err;
     }
   };
 
-  const addShipmentUpdate = async (shipmentId: string, message: string, type: any, location?: string) => {
+  const updateShipmentStatus = async (id: string, status: any, message?: string) => {
     try {
-      await api.shipmentAPI.addUpdate(shipmentId, message, type, location);
-      // Refresh shipments to get updated data
-      await fetchShipments();
+      const updatedShipment = await api.shipments.updateStatus(id, status, message);
+      setData(prev => prev ? prev.map(s => s.id === id ? updatedShipment : s) : []);
+      return updatedShipment;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add shipment update');
       throw err;
     }
   };
 
-  useEffect(() => {
-    fetchShipments();
+  const addShipmentUpdate = async (shipmentId: string, message: string, type: any, location?: { lat: number; lng: number }, address?: string) => {
+    try {
+      await api.shipments.addUpdate(shipmentId, message, type, false, location, address);
+      // Refresh shipments to get updated data
+      await refetch();
+    } catch (err) {
+      throw err;
+    }
+  };
 
-    // Subscribe to real-time updates
-    const subscription = api.shipmentAPI.subscribeToUpdates((payload) => {
+  // Set up real-time subscriptions
+  useEffect(() => {
+    const unsubscribeShipments = api.shipments.subscribeToUpdates((payload) => {
       if (payload.eventType === 'INSERT') {
-        setShipments(prev => [payload.new, ...prev]);
+        setData(prev => prev ? [payload.new, ...prev] : [payload.new]);
       } else if (payload.eventType === 'UPDATE') {
-        setShipments(prev => prev.map(s => s.id === payload.new.id ? payload.new : s));
+        setData(prev => prev ? prev.map(s => s.id === payload.new.id ? payload.new : s) : []);
       } else if (payload.eventType === 'DELETE') {
-        setShipments(prev => prev.filter(s => s.id !== payload.old.id));
+        setData(prev => prev ? prev.filter(s => s.id !== payload.old.id) : []);
+      }
+    });
+
+    const unsubscribeUpdates = api.shipments.subscribeToShipmentUpdates((payload) => {
+      if (payload.eventType === 'INSERT') {
+        // Refresh the specific shipment to get updated data
+        refetch();
       }
     });
 
     return () => {
-      subscription.unsubscribe();
+      unsubscribeShipments.unsubscribe();
+      unsubscribeUpdates.unsubscribe();
     };
-  }, []);
+  }, [refetch, setData]);
 
   return {
-    shipments,
+    shipments: shipments || [],
     loading,
     error,
-    refetch: fetchShipments,
+    refetch,
     createShipment,
     updateShipment,
+    updateShipmentStatus,
     addShipmentUpdate
   };
 };
 
-// Custom hook for operators
-export const useOperators = () => {
-  const [operators, setOperators] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchOperators = async () => {
-    try {
-      setLoading(true);
-      const data = await api.operatorAPI.getAll();
-      setOperators(data || []);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch operators');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateOperatorStatus = async (id: string, status: any) => {
-    try {
-      const updatedOperator = await api.operatorAPI.updateStatus(id, status);
-      setOperators(prev => prev.map(o => o.id === id ? updatedOperator : o));
-      return updatedOperator;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update operator');
-      throw err;
-    }
-  };
-
-  const updateOperatorLocation = async (id: string, location: string) => {
-    try {
-      const updatedOperator = await api.operatorAPI.updateLocation(id, location);
-      setOperators(prev => prev.map(o => o.id === id ? updatedOperator : o));
-      return updatedOperator;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update operator location');
-      throw err;
-    }
-  };
-
-  useEffect(() => {
-    fetchOperators();
-  }, []);
-
-  return {
-    operators,
-    loading,
-    error,
-    refetch: fetchOperators,
-    updateOperatorStatus,
-    updateOperatorLocation
-  };
-};
-
-// Custom hook for notifications
-export const useNotifications = () => {
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true);
-      const data = await api.notificationAPI.getAll();
-      setNotifications(data || []);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch notifications');
-    } finally {
-      setLoading(false);
-    }
-  };
+// Notifications hook with real-time updates
+export const useNotifications = (userId?: string, userType?: string) => {
+  const { data: notifications, loading, error, refetch, setData } = useAPI(
+    () => api.notifications.getAll(userId, userType),
+    [userId, userType]
+  );
 
   const createNotification = async (notification: any) => {
     try {
-      const newNotification = await api.notificationAPI.create(notification);
-      setNotifications(prev => [newNotification, ...prev]);
+      const newNotification = await api.notifications.create(notification);
+      setData(prev => prev ? [newNotification, ...prev] : [newNotification]);
       return newNotification;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create notification');
       throw err;
     }
   };
 
   const markAsRead = async (id: string) => {
     try {
-      await api.notificationAPI.markAsRead(id);
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+      await api.notifications.markAsRead(id);
+      setData(prev => prev ? prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n) : []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to mark notification as read');
       throw err;
     }
   };
 
-  useEffect(() => {
-    fetchNotifications();
+  const markAllAsRead = async () => {
+    if (!userId || !userType) return;
+    
+    try {
+      await api.notifications.markAllAsRead(userId, userType);
+      setData(prev => prev ? prev.map(n => ({ ...n, read_at: new Date().toISOString() })) : []);
+    } catch (err) {
+      throw err;
+    }
+  };
 
-    // Subscribe to real-time notifications
-    const subscription = api.notificationAPI.subscribeToNotifications((payload) => {
+  // Set up real-time subscriptions
+  useEffect(() => {
+    if (!userId || !userType) return;
+
+    const unsubscribe = api.notifications.subscribeToNotifications(userId, userType, (payload) => {
       if (payload.eventType === 'INSERT') {
-        setNotifications(prev => [payload.new, ...prev]);
+        setData(prev => prev ? [payload.new, ...prev] : [payload.new]);
       }
     });
 
     return () => {
-      subscription.unsubscribe();
+      unsubscribe.unsubscribe();
     };
-  }, []);
+  }, [userId, userType, setData]);
+
+  const unreadCount = notifications?.filter(n => !n.read_at).length || 0;
 
   return {
-    notifications,
+    notifications: notifications || [],
     loading,
     error,
-    unreadCount: notifications.filter(n => !n.read).length,
-    refetch: fetchNotifications,
+    unreadCount,
+    refetch,
     createNotification,
-    markAsRead
+    markAsRead,
+    markAllAsRead
   };
 };
 
-// Custom hook for analytics
-export const useAnalytics = () => {
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// Analytics hook
+export const useAnalytics = (companyId?: string) => {
+  const { data: analytics, loading, error, refetch } = useAPI(
+    () => api.analytics.getDashboardStats(companyId),
+    [companyId]
+  );
 
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-      const data = await api.analyticsAPI.getDashboardStats();
-      setAnalytics(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch analytics');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: realTimeMetrics, refetch: refetchRealTime } = useAPI(
+    () => api.analytics.getRealTimeMetrics(companyId),
+    [companyId]
+  );
 
+  // Refresh real-time metrics every 30 seconds
   useEffect(() => {
-    fetchAnalytics();
-    
-    // Refresh analytics every 5 minutes
-    const interval = setInterval(fetchAnalytics, 5 * 60 * 1000);
-    
+    const interval = setInterval(refetchRealTime, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [refetchRealTime]);
 
   return {
     analytics,
+    realTimeMetrics,
     loading,
     error,
-    refetch: fetchAnalytics
+    refetch,
+    refetchRealTime
   };
 };
 
-// Custom hook for real-time data
+// Payments hook
+export const usePayments = (shipmentId?: string, operatorId?: string) => {
+  const { data: payments, loading, error, refetch, setData } = useAPI(
+    () => {
+      if (shipmentId) return api.payments.getByShipment(shipmentId);
+      if (operatorId) return api.payments.getByOperator(operatorId);
+      return Promise.resolve([]);
+    },
+    [shipmentId, operatorId]
+  );
+
+  const createPayment = async (payment: any) => {
+    try {
+      const newPayment = await api.payments.create(payment);
+      setData(prev => prev ? [newPayment, ...prev] : [newPayment]);
+      return newPayment;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const updatePaymentStatus = async (id: string, status: any, transactionId?: string, gatewayResponse?: any) => {
+    try {
+      const updatedPayment = await api.payments.updateStatus(id, status, transactionId, gatewayResponse);
+      setData(prev => prev ? prev.map(p => p.id === id ? updatedPayment : p) : []);
+      return updatedPayment;
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  return {
+    payments: payments || [],
+    loading,
+    error,
+    refetch,
+    createPayment,
+    updatePaymentStatus
+  };
+};
+
+// Real-time connection hook
 export const useRealTime = () => {
   const [isConnected, setIsConnected] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
-    const unsubscribe = api.realtimeAPI.subscribeToAllChanges((payload) => {
+    const unsubscribe = api.subscribeToAllChanges((payload) => {
+      setLastUpdate(new Date());
       console.log('Real-time update:', payload);
-      // Handle real-time updates here
     });
 
     setIsConnected(true);
@@ -369,5 +453,77 @@ export const useRealTime = () => {
     };
   }, []);
 
-  return { isConnected };
+  return { 
+    isConnected, 
+    lastUpdate 
+  };
+};
+
+// Location tracking hook
+export const useLocationTracking = () => {
+  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const getCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by this browser');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setError(null);
+      },
+      (error) => {
+        setError(error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+  }, []);
+
+  const watchLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by this browser');
+      return null;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        setLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+        setError(null);
+      },
+      (error) => {
+        setError(error.message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 60000
+      }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, [getCurrentLocation]);
+
+  return {
+    location,
+    error,
+    getCurrentLocation,
+    watchLocation
+  };
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DatabaseProvider } from './context/DatabaseContext';
+import { DatabaseProvider } from './context/DatabaseContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -61,12 +62,18 @@ function App() {
   }
 
   return (
-    <DatabaseProvider>
+    <DatabaseProvider 
+      userId="demo-user-id" 
+      userType={userRole === 'logistics' ? 'company' : userRole}
+      companyId={userRole === 'logistics' ? 'demo-company-id' : undefined}
+    >
       <div className="min-h-screen bg-gray-50">
         <Header 
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-          userRole={userRole}
-        />
+            onTabChange={handleTabChange}
+            userRole={userRole}
+          />
+          
         
         <div className="flex">
           <Sidebar 

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Wifi, WifiOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Wifi, WifiOff, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useConnectionStatus } from '../context/DatabaseContext';
 
 const ConnectionStatus: React.FC = () => {
-  const { isConnected, hasErrors, isLoading } = useConnectionStatus();
+  const { isConnected, lastUpdate, hasErrors, isLoading } = useConnectionStatus();
 
   const getStatusInfo = () => {
     if (!isConnected) {
@@ -24,7 +24,7 @@ const ConnectionStatus: React.FC = () => {
     
     if (isLoading) {
       return {
-        icon: Wifi,
+        icon: Clock,
         text: 'Syncing...',
         color: 'text-blue-600 bg-blue-50 border-blue-200',
       };
@@ -39,12 +39,31 @@ const ConnectionStatus: React.FC = () => {
 
   const { icon: Icon, text, color } = getStatusInfo();
 
+  const formatLastUpdate = () => {
+    if (!lastUpdate) return '';
+    
+    const now = new Date();
+    const diff = now.getTime() - lastUpdate.getTime();
+    const seconds = Math.floor(diff / 1000);
+    
+    if (seconds < 60) return `${seconds}s ago`;
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes}m ago`;
+    const hours = Math.floor(minutes / 60);
+    return `${hours}h ago`;
+  };
+
   return (
     <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${color}`}>
       <Icon className="h-3 w-3" />
       <span>{text}</span>
       {isConnected && !hasErrors && !isLoading && (
         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+      )}
+      {lastUpdate && (
+        <span className="text-xs opacity-75">
+          {formatLastUpdate()}
+        </span>
       )}
     </div>
   );
