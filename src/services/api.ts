@@ -1,4 +1,5 @@
 import { supabase, dbHelpers } from '../lib/supabase';
+import { isConnected } from '../lib/supabase';
 import type { Database } from '../lib/supabase';
 
 type Tables = Database['public']['Tables'];
@@ -12,11 +13,22 @@ class BaseAPI {
   }
 
   protected handleError(error: any, operation: string) {
+    if (!isConnected) {
+      console.warn(`${operation}: Supabase not connected. Using demo mode.`);
+      return [] as never;
+    }
+    
     console.error(`${operation} error in ${this.tableName}:`, error);
     throw new Error(error.message || `Failed to ${operation.toLowerCase()}`);
   }
 
   protected async executeQuery(queryBuilder: any, operation: string) {
+    // If not connected to Supabase, return empty array
+    if (!isConnected) {
+      console.warn('Supabase not connected. Please configure your .env file with valid credentials.');
+      return [];
+    }
+    
     try {
       const { data, error } = await queryBuilder;
       if (error) this.handleError(error, operation);

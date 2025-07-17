@@ -1,69 +1,35 @@
 import React from 'react';
-import { Wifi, WifiOff, AlertCircle, CheckCircle, Clock } from 'lucide-react';
-import { useConnectionStatus } from '../context/DatabaseContext';
+import { Wifi, WifiOff, AlertCircle } from 'lucide-react';
+import { isConnected } from '../lib/supabase';
 
-const ConnectionStatus: React.FC = () => {
-  const { isConnected, lastUpdate, hasErrors, isLoading } = useConnectionStatus();
+export const ConnectionStatus: React.FC = () => {
+  const [isLoading, setIsLoading] = React.useState(false);
 
-  const getStatusInfo = () => {
-    if (!isConnected) {
-      return {
-        icon: WifiOff,
-        text: 'Disconnected',
-        color: 'text-red-600 bg-red-50 border-red-200',
-      };
-    }
-    
-    if (hasErrors) {
-      return {
-        icon: AlertCircle,
-        text: 'Connection Issues',
-        color: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-      };
-    }
-    
-    if (isLoading) {
-      return {
-        icon: Clock,
-        text: 'Syncing...',
-        color: 'text-blue-600 bg-blue-50 border-blue-200',
-      };
-    }
-    
-    return {
-      icon: CheckCircle,
-      text: 'Connected',
-      color: 'text-green-600 bg-green-50 border-green-200',
-    };
-  };
-
-  const { icon: Icon, text, color } = getStatusInfo();
-
-  const formatLastUpdate = () => {
-    if (!lastUpdate) return '';
-    
-    const now = new Date();
-    const diff = now.getTime() - lastUpdate.getTime();
-    const seconds = Math.floor(diff / 1000);
-    
-    if (seconds < 60) return `${seconds}s ago`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours}h ago`;
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center space-x-2 px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+        <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <span>Checking...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-medium ${color}`}>
-      <Icon className="h-3 w-3" />
-      <span>{text}</span>
-      {isConnected && !hasErrors && !isLoading && (
-        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-      )}
-      {lastUpdate && (
-        <span className="text-xs opacity-75">
-          {formatLastUpdate()}
-        </span>
+    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
+      isConnected 
+        ? 'bg-green-100 text-green-800'
+        : 'bg-yellow-100 text-yellow-800'
+    }`}>
+      {isConnected ? (
+        <>
+          <Wifi className="w-4 h-4" />
+          <span>Online</span>
+        </>
+      ) : (
+        <>
+          <AlertCircle className="w-4 h-4" />
+          <span>Demo Mode</span>
+        </>
       )}
     </div>
   );
