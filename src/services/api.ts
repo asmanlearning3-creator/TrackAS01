@@ -611,6 +611,10 @@ export class ShipmentAPI extends BaseAPI {
 
   // Real-time subscriptions
   subscribeToUpdates(callback: (payload: any) => void) {
+    if (!isConnected) {
+      return { unsubscribe: () => {} };
+    }
+    
     return supabase
       .channel('shipment_updates')
       .on('postgres_changes', 
@@ -625,6 +629,10 @@ export class ShipmentAPI extends BaseAPI {
   }
 
   subscribeToShipmentUpdates(callback: (payload: any) => void) {
+    if (!isConnected) {
+      return { unsubscribe: () => {} };
+    }
+    
     return supabase
       .channel('shipment_status_updates')
       .on('postgres_changes', 
@@ -715,6 +723,10 @@ export class NotificationAPI extends BaseAPI {
 
   // Subscribe to notifications
   subscribeToNotifications(userId: string, userType: string, callback: (payload: any) => void) {
+    if (!isConnected) {
+      return { unsubscribe: () => {} };
+    }
+    
     return supabase
       .channel(`notifications_${userId}`)
       .on('postgres_changes', 
@@ -991,18 +1003,25 @@ export class TrackASAPI {
 
   // Real-time subscriptions
   subscribeToAllChanges(callback: (payload: any) => void) {
+    if (!isConnected) {
+      // Return a mock cleanup function for demo mode
+      return () => {};
+    }
+
     const channels = [
       this.shipments.subscribeToUpdates(callback),
       this.shipments.subscribeToShipmentUpdates(callback),
-      supabase.channel('operators').on('postgres_changes', { event: '*', schema: 'public', table: 'operators' }, callback),
-      supabase.channel('vehicles').on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, callback),
-      supabase.channel('companies').on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, callback),
+      supabase.channel('operators').on('postgres_changes', { event: '*', schema: 'public', table: 'operators' }, callback).subscribe(),
+      supabase.channel('vehicles').on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, callback).subscribe(),
+      supabase.channel('companies').on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, callback).subscribe(),
     ];
-
-    channels.forEach(channel => channel.subscribe());
     
     return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
+      channels.forEach(channel => {
+        if (channel && typeof channel.unsubscribe === 'function') {
+          channel.unsubscribe();
+        }
+      });
     };
   }
 

@@ -28,10 +28,17 @@ const createMockClient = () => ({
     signOut: () => Promise.resolve({ error: null }),
     getUser: () => Promise.resolve({ data: { user: null }, error: null }),
   },
-  channel: () => ({
-    on: () => ({ subscribe: () => {} }),
+  channel: (name: string) => ({
+    on: (event: string, config: any, callback: Function) => ({
+      subscribe: () => ({
+        unsubscribe: () => {},
+        channel: name
+      })
+    }),
     unsubscribe: () => {},
   }),
+  removeChannel: () => {},
+  rpc: () => Promise.resolve({ data: null, error: null }),
 });
 
 export const supabase = hasValidCredentials 

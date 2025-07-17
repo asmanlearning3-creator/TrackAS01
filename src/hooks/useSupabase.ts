@@ -444,15 +444,23 @@ export const useRealTime = () => {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
-    const unsubscribe = api.subscribeToAllChanges((payload) => {
+    let unsubscribe: (() => void) | undefined;
+    
+    try {
+      unsubscribe = api.subscribeToAllChanges((payload) => {
       setLastUpdate(new Date());
       console.log('Real-time update:', payload);
     });
+    } catch (error) {
+      console.warn('Failed to set up real-time subscriptions:', error);
+    }
 
     setIsConnected(true);
 
     return () => {
-      unsubscribe();
+      if (unsubscribe && typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
       setIsConnected(false);
     };
   }, []);
