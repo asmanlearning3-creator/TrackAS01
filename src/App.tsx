@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AppProvider } from './context/AppContext';
+import { DatabaseProvider } from './context/DatabaseContext';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -61,35 +62,37 @@ function App() {
   }
 
   return (
-    <AppProvider>
-      <div className="min-h-screen bg-gray-50">
-        <Header 
-          onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-          userRole={userRole}
-        />
-        
-        <div className="flex">
-          <Sidebar 
-            isOpen={sidebarOpen}
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
+    <DatabaseProvider userId="demo-user" userType="company">
+      <AppProvider>
+        <div className="min-h-screen bg-gray-50">
+          <Header 
+            onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
             userRole={userRole}
           />
           
-          <main className="flex-1 lg:ml-64">
-            {renderContent()}
-          </main>
+          <div className="flex">
+            <Sidebar 
+              isOpen={sidebarOpen}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              userRole={userRole}
+            />
+            
+            <main className="flex-1 lg:ml-64">
+              {renderContent()}
+            </main>
+          </div>
+          
+          {/* Overlay for mobile */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
         </div>
-        
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-      </div>
-    </AppProvider>
+      </AppProvider>
+    </DatabaseProvider>
   );
 }
 

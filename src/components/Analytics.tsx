@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
 import { BarChart3, TrendingUp, TrendingDown, Users, Package, Clock, CreditCard, MapPin } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useDatabase } from '../context/DatabaseContext';
+import LoadingSpinner from './LoadingSpinner';
 
 const Analytics: React.FC = () => {
   const { state } = useApp();
+  const { analytics, realTimeMetrics, analyticsLoading, refetchAnalytics } = useDatabase();
   const [timeRange, setTimeRange] = useState('7d');
 
   const metrics = [
     { 
-      title: 'Total Shipments', 
-      value: state.analytics.totalShipments.toLocaleString(), 
+      title: 'Total Shipments',
+      value: analytics?.totalShipments?.toLocaleString() || state.analytics.totalShipments.toLocaleString(),
       change: '+12.5%', 
       trend: 'up', 
       icon: Package,
@@ -18,7 +21,7 @@ const Analytics: React.FC = () => {
     },
     { 
       title: 'Success Rate', 
-      value: `${state.analytics.successRate}%`, 
+      value: `${analytics?.successRate || state.analytics.successRate}%`,
       change: '+2.1%', 
       trend: 'up', 
       icon: TrendingUp,
@@ -27,7 +30,7 @@ const Analytics: React.FC = () => {
     },
     { 
       title: 'Active Operators', 
-      value: state.analytics.activeOperators.toString(), 
+      value: (analytics?.activeOperators || state.analytics.activeOperators).toString(),
       change: '+8.3%', 
       trend: 'up', 
       icon: Users,
@@ -36,7 +39,7 @@ const Analytics: React.FC = () => {
     },
     { 
       title: 'Avg. Delivery Time', 
-      value: state.analytics.avgDeliveryTime, 
+      value: analytics?.avgDeliveryTime || state.analytics.avgDeliveryTime,
       change: '-15.2%', 
       trend: 'down', 
       icon: Clock,
@@ -45,7 +48,7 @@ const Analytics: React.FC = () => {
     },
     { 
       title: 'Revenue', 
-      value: state.analytics.revenue, 
+      value: analytics?.revenue || state.analytics.revenue,
       change: '+18.7%', 
       trend: 'up', 
       icon: CreditCard,
@@ -54,7 +57,7 @@ const Analytics: React.FC = () => {
     },
     { 
       title: 'Route Efficiency', 
-      value: `${state.analytics.routeEfficiency}%`, 
+      value: `${analytics?.routeEfficiency || state.analytics.routeEfficiency}%`,
       change: '+3.8%', 
       trend: 'up', 
       icon: MapPin,
@@ -63,8 +66,8 @@ const Analytics: React.FC = () => {
     },
   ];
 
-  const topRoutes = state.analytics.topRoutes;
-  const operatorPerformance = state.analytics.operatorPerformance;
+  const topRoutes = analytics?.topRoutes || state.analytics.topRoutes;
+  const operatorPerformance = analytics?.operatorPerformance || state.analytics.operatorPerformance;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -76,6 +79,7 @@ const Analytics: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            {analyticsLoading && <LoadingSpinner size="sm" text="Loading..." />}
             <div className="hidden lg:flex items-center space-x-2 bg-white px-3 py-1 rounded-full shadow-sm border">
               <img 
                 src="/Vipul.png" 
@@ -86,7 +90,10 @@ const Analytics: React.FC = () => {
             </div>
             <select
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={(e) => {
+                setTimeRange(e.target.value);
+                refetchAnalytics();
+              }}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="24h">Last 24 Hours</option>

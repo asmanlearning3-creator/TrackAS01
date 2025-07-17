@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Package, MapPin, Clock, User, CreditCard, Truck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useDatabase } from '../context/DatabaseContext';
+import LoadingSpinner from './LoadingSpinner';
 import { Shipment } from '../types';
 
 const CreateShipment: React.FC = () => {
   const { dispatch } = useApp();
+  const { createShipment, createCustomer, shipmentsLoading } = useDatabase();
   const [model, setModel] = useState<'subscription' | 'pay-per-shipment'>('subscription');
   const [formData, setFormData] = useState({
     pickupLocation: '',
@@ -19,66 +22,114 @@ const CreateShipment: React.FC = () => {
     price: '',
     urgency: 'standard',
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const newShipment: Shipment = {
-      id: `TAS-2024-${String(Date.now()).slice(-3)}`,
-      customer: formData.customerName,
-      customerPhone: formData.customerPhone,
-      customerEmail: formData.customerEmail,
-      from: formData.pickupLocation,
-      to: formData.destination,
-      status: 'pending',
-      progress: 0,
-      estimatedDelivery: formData.expectedDelivery,
-      currentLocation: formData.pickupLocation,
-      weight: parseFloat(formData.weight),
-      dimensions: formData.dimensions,
-      price: model === 'pay-per-shipment' ? parseFloat(formData.price) : undefined,
-      urgency: formData.urgency as 'standard' | 'urgent' | 'express',
-      specialHandling: formData.specialHandling,
-      createdAt: new Date().toISOString(),
-      model,
-      updates: [
-        {
-          time: new Date().toLocaleTimeString(),
-          message: 'Shipment created and awaiting operator assignment',
-          type: 'info'
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
+    try {
+      // First create/upsert customer
+      const customer = await createCustomer({
+        name: formData.customerName,
+        phone: formData.customerPhone,
+        email: formData.customerEmail,
+      });
+    
+      // Create shipment
+      const shipmentData = {
+        customer_id: customer.id,
+        customer_name: formData.customerName,
+        customer_phone: formData.customerPhone,
+        customer_email: formData.customerEmail,
+        pickup_address: formData.pickupLocation,
+        destination_address: formData.destination,
+        weight: parseFloat(formData.weight),
+        dimensions: formData.dimensions,
+        price: model === 'pay-per-shipment' ? parseFloat(formData.price) : null,
+        urgency: formData.urgency,
+        special_handling: formData.specialHandling,
+        model,
+        estimated_delivery: formData.expectedDelivery,
+      };
+
+      const newShipment = await createShipment(shipmentData);
+
+      // Also update local state for immediate UI feedback
+      const localShipment: Shipment = {
+        id: newShipment.id,
+        customer: formData.customerName,
+        customerPhone: formData.customerPhone,
+        customerEmail: formData.customerEmail,
+        from: formData.pickupLocation,
+        to: formData.destination,
+        status: 'pending',
+        progress: 0,
+        estimatedDelivery: formData.expectedDelivery,
+        currentLocation: formData.pickupLocation,
+        weight: parseFloat(formData.weight),
+        dimensions: formData.dimensions,
+        price: model === 'pay-per-shipment' ? parseFloat(formData.price) : undefined,
+        urgency: formData.urgency as 'standard' | 'urgent' | 'express',
+        specialHandling: formData.specialHandling,
+        createdAt: new Date().toISOString(),
+        model,
+        updates: [
+          {
+            time: new Date().toLocaleTimeString(),
+            message: 'Shipment created and awaiting operator assignment',
+            type: 'info'
+          }
+        ]
+      };
+
+      dispatch({ type: 'ADD_SHIPMENT', payload: localShipment });
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        payload: {
+          id: `NOT-${Date.now()}`,
+          type: 'success',
+          title: 'Shipment Created',
+          message: `New shipment ${newShipment.id} created successfully`,
+          timestamp: 'Just now',
+          read: false
         }
-      ]
-    };
+      });
 
-    dispatch({ type: 'ADD_SHIPMENT', payload: newShipment });
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: {
-        id: `NOT-${Date.now()}`,
-        type: 'success',
-        title: 'Shipment Created',
-        message: `New shipment ${newShipment.id} created successfully`,
-        timestamp: 'Just now',
-        read: false
-      }
-    });
+      // Reset form
+      setFormData({
+        pickupLocation: '',
+        destination: '',
+        weight: '',
+        dimensions: '',
+        specialHandling: '',
+        expectedDelivery: '',
+        customerName: '',
+        customerPhone: '',
+        customerEmail: '',
+        price: '',
+        urgency: 'standard',
+      });
 
-    // Reset form
-    setFormData({
-      pickupLocation: '',
-      destination: '',
-      weight: '',
-      dimensions: '',
-      specialHandling: '',
-      expectedDelivery: '',
-      customerName: '',
-      customerPhone: '',
-      customerEmail: '',
-      price: '',
-      urgency: 'standard',
-    });
-
-    alert('Shipment created successfully!');
+      alert('Shipment created successfully!');
+    } catch (error) {
+      console.error('Failed to create shipment:', error);
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        payload: {
+          id: `NOT-${Date.now()}`,
+          type: 'error',
+          title: 'Shipment Creation Failed',
+          message: 'Failed to create shipment. Please try again.',
+          timestamp: 'Just now',
+          read: false
+        }
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -346,9 +397,17 @@ const CreateShipment: React.FC = () => {
           </button>
           <button
             type="submit"
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={isSubmitting || shipmentsLoading}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
           >
-            Create Shipment
+            {isSubmitting ? (
+              <>
+                <LoadingSpinner size="sm" text="" />
+                <span>Creating...</span>
+              </>
+            ) : (
+              <span>Create Shipment</span>
+            )}
           </button>
         </div>
       </form>

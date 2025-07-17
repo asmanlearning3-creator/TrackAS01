@@ -17,9 +17,30 @@ class BaseAPI {
   }
 
   protected async executeQuery(queryBuilder: any, operation: string) {
-    const { data, error } = await queryBuilder;
-    if (error) this.handleError(error, operation);
-    return data;
+    try {
+      const { data, error } = await queryBuilder;
+      if (error) this.handleError(error, operation);
+      return data;
+    } catch (err) {
+      console.warn(`${operation} failed, using fallback:`, err);
+      return this.getFallbackData(operation);
+    }
+  }
+
+  protected getFallbackData(operation: string): any {
+    // Return mock data when Supabase is not available
+    switch (operation.toLowerCase()) {
+      case 'get companies':
+        return [];
+      case 'get vehicles':
+        return [];
+      case 'get operators':
+        return [];
+      case 'get shipments':
+        return [];
+      default:
+        return null;
+    }
   }
 }
 

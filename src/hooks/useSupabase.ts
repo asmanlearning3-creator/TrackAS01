@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 
-// Generic hook for API operations
+// Generic hook for API operations with fallback
 function useAPI<T>(
   apiCall: () => Promise<T>,
   dependencies: any[] = []
@@ -17,7 +17,11 @@ function useAPI<T>(
       const result = await apiCall();
       setData(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setError(errorMessage);
+      console.warn('API call failed:', errorMessage);
+      // Set empty data instead of null for better UX
+      setData([] as unknown as T);
     } finally {
       setLoading(false);
     }
