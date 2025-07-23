@@ -5,7 +5,13 @@ export interface Shipment {
   customerEmail: string;
   from: string;
   to: string;
-  status: 'pending' | 'assigned' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
+  status:
+    | "pending"
+    | "assigned"
+    | "picked_up"
+    | "in_transit"
+    | "delivered"
+    | "cancelled";
   progress: number;
   driver?: string;
   driverPhone?: string;
@@ -15,17 +21,17 @@ export interface Shipment {
   weight: number;
   dimensions: string;
   price?: number;
-  urgency: 'standard' | 'urgent' | 'express';
+  urgency: "standard" | "urgent" | "express";
   specialHandling?: string;
   createdAt: string;
   updates: ShipmentUpdate[];
-  model: 'subscription' | 'pay-per-shipment';
+  model: "subscription" | "pay-per-shipment";
 }
 
 export interface ShipmentUpdate {
   time: string;
   message: string;
-  type: 'info' | 'success' | 'warning' | 'error';
+  type: "info" | "success" | "warning" | "error";
   location?: string;
 }
 
@@ -40,7 +46,7 @@ export interface Operator {
   earnings: number;
   vehicle: string;
   currentLocation: string;
-  status: 'available' | 'busy' | 'offline';
+  status: "available" | "busy" | "offline";
   specializations: string[];
 }
 
@@ -62,8 +68,19 @@ export interface Analytics {
   revenue: string;
   routeEfficiency: number;
   dailyTrends: { date: string; shipments: number; revenue: number }[];
-  topRoutes: { route: string; shipments: number; revenue: string; efficiency: string }[];
-  operatorPerformance: { name: string; rating: number; deliveries: number; onTime: string; earnings: string }[];
+  topRoutes: {
+    route: string;
+    shipments: number;
+    revenue: string;
+    efficiency: string;
+  }[];
+  operatorPerformance: {
+    name: string;
+    rating: number;
+    deliveries: number;
+    onTime: string;
+    earnings: string;
+  }[];
 }
 
 export interface Company {
@@ -79,7 +96,7 @@ export interface Company {
   };
   fleetSize?: number;
   registrationDate: string;
-  status: 'pending' | 'under_review' | 'approved' | 'rejected';
+  status: "pending" | "under_review" | "approved" | "rejected";
   verificationStatus: {
     tinVerified: boolean;
     businessRegVerified: boolean;
@@ -93,7 +110,7 @@ export interface Vehicle {
   id: string;
   companyId: string;
   vcode: string;
-  type: 'truck' | 'van' | 'bike' | 'car' | 'other';
+  type: "truck" | "van" | "bike" | "car" | "other";
   registrationNumber: string;
   capacity: {
     weight: number; // in kg
@@ -104,7 +121,7 @@ export interface Vehicle {
     mobile: string;
     licenseNumber: string;
   };
-  status: 'pending' | 'verified' | 'active' | 'inactive' | 'rejected';
+  status: "pending" | "verified" | "active" | "inactive" | "rejected";
   verificationStatus: {
     registrationVerified: boolean;
     insuranceVerified: boolean;
@@ -113,14 +130,14 @@ export interface Vehicle {
   registrationDate: string;
   approvalDate?: string;
   currentLocation?: string;
-  availability: 'available' | 'busy' | 'maintenance';
+  availability: "available" | "busy" | "maintenance";
 }
 
 export interface RegistrationApplication {
   id: string;
-  type: 'company' | 'vehicle';
+  type: "company" | "vehicle";
   applicantId: string;
-  status: 'submitted' | 'under_review' | 'approved' | 'rejected';
+  status: "submitted" | "under_review" | "approved" | "rejected";
   submissionDate: string;
   reviewDate?: string;
   reviewedBy?: string;
@@ -128,6 +145,6 @@ export interface RegistrationApplication {
   documents: {
     name: string;
     type: string;
-    status: 'pending' | 'verified' | 'rejected';
+    status: "pending" | "verified" | "rejected";
   }[];
 }

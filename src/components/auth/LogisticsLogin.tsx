@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { Building2, ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
-import PasswordReset from './PasswordReset';
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import {
+  Building2,
+  ArrowLeft,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+} from "lucide-react";
+import PasswordReset from "./PasswordReset";
 
 interface LogisticsLoginProps {
   onBack: () => void;
@@ -10,35 +18,37 @@ interface LogisticsLoginProps {
 const LogisticsLogin: React.FC<LogisticsLoginProps> = ({ onBack }) => {
   const { signIn, loading } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [signUpData, setSignUpData] = useState({
-    companyName: '',
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
+    companyName: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (isSignUp) {
       if (signUpData.password !== signUpData.confirmPassword) {
-        setError('Passwords do not match');
+        setError("Passwords do not match");
         return;
       }
 
       // For now, just show message that registration requires approval
-      setError('Company registration requires manual approval. Please contact our sales team.');
+      setError(
+        "Company registration requires manual approval. Please contact our sales team.",
+      );
       return;
     }
 
@@ -51,9 +61,9 @@ const LogisticsLogin: React.FC<LogisticsLoginProps> = ({ onBack }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (isSignUp) {
-      setSignUpData(prev => ({ ...prev, [name]: value }));
+      setSignUpData((prev) => ({ ...prev, [name]: value }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -78,10 +88,12 @@ const LogisticsLogin: React.FC<LogisticsLoginProps> = ({ onBack }) => {
               <Building2 className="w-8 h-8 text-blue-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {isSignUp ? 'Register Company' : 'Logistics Portal'}
+              {isSignUp ? "Register Company" : "Logistics Portal"}
             </h1>
             <p className="text-gray-600">
-              {isSignUp ? 'Create your company account' : 'Sign in to manage your logistics operations'}
+              {isSignUp
+                ? "Create your company account"
+                : "Sign in to manage your logistics operations"}
             </p>
           </div>
 
@@ -182,7 +194,7 @@ const LogisticsLogin: React.FC<LogisticsLoginProps> = ({ onBack }) => {
               </label>
               <div className="relative">
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={isSignUp ? signUpData.password : formData.password}
                   onChange={handleInputChange}
@@ -196,7 +208,11 @@ const LogisticsLogin: React.FC<LogisticsLoginProps> = ({ onBack }) => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -208,7 +224,7 @@ const LogisticsLogin: React.FC<LogisticsLoginProps> = ({ onBack }) => {
                 </label>
                 <div className="relative">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     name="confirmPassword"
                     value={signUpData.confirmPassword}
                     onChange={handleInputChange}
@@ -224,8 +240,13 @@ const LogisticsLogin: React.FC<LogisticsLoginProps> = ({ onBack }) => {
             {!isSignUp && (
               <div className="flex items-center justify-between">
                 <label className="flex items-center">
-                  <input type="checkbox" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-                  <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-600">
+                    Remember me
+                  </span>
                 </label>
                 <button
                   type="button"
@@ -242,18 +263,22 @@ const LogisticsLogin: React.FC<LogisticsLoginProps> = ({ onBack }) => {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Processing...' : (isSignUp ? 'Register Company' : 'Sign In')}
+              {loading
+                ? "Processing..."
+                : isSignUp
+                  ? "Register Company"
+                  : "Sign In"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
               <button
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
-                {isSignUp ? 'Sign in here' : 'Register here'}
+                {isSignUp ? "Sign in here" : "Register here"}
               </button>
             </p>
           </div>
@@ -261,8 +286,9 @@ const LogisticsLogin: React.FC<LogisticsLoginProps> = ({ onBack }) => {
           {isSignUp && (
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>Note:</strong> Company registration requires verification and approval. 
-                Our team will review your application within 24-48 hours.
+                <strong>Note:</strong> Company registration requires
+                verification and approval. Our team will review your application
+                within 24-48 hours.
               </p>
             </div>
           )}

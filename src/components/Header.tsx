@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Menu, LogOut, User, Settings } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import NotificationCenter from './NotificationCenter';
-import ConnectionStatus from './ConnectionStatus';
+import React, { useState, useEffect, useRef } from "react";
+import { Menu, LogOut, User, Settings } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import NotificationCenter from "./NotificationCenter";
+import ConnectionStatus from "./ConnectionStatus";
 
 interface HeaderProps {
   onMenuToggle: () => void;
-  userRole: 'logistics' | 'operator' | 'customer';
+  userRole: "logistics" | "operator" | "customer";
 }
 
 const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
@@ -16,21 +16,28 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowDropdown(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const getRoleDisplayName = () => {
     switch (userRole) {
-      case 'logistics': return 'Logistics Company';
-      case 'operator': return 'Operator';
-      case 'customer': return 'Customer';
-      default: return 'User';
+      case "logistics":
+        return "Logistics Company";
+      case "operator":
+        return "Operator";
+      case "customer":
+        return "Customer";
+      default:
+        return "User";
     }
   };
 
@@ -43,7 +50,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
     if (user?.user_metadata?.firstName && user?.user_metadata?.lastName) {
       return `${user.user_metadata.firstName} ${user.user_metadata.lastName}`;
     }
-    return user?.email?.split('@')[0] || 'User';
+    return user?.email?.split("@")[0] || "User";
   };
 
   return (
@@ -59,9 +66,9 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
             </button>
             <div className="flex items-center space-x-3 ml-2 lg:ml-0">
               <div className="bg-white p-1 rounded-lg shadow-sm">
-                <img 
-                  src="/LOGO.png" 
-                  alt="TrackAS Logo" 
+                <img
+                  src="/LOGO.png"
+                  alt="TrackAS Logo"
                   className="h-8 w-auto"
                 />
               </div>
@@ -71,12 +78,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <ConnectionStatus />
-            
+
             <NotificationCenter />
-            
+
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
@@ -86,19 +93,27 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
                   <User className="h-5 w-5 text-gray-600" />
                 </div>
                 <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium text-gray-900">{getUserDisplayName()}</p>
-                  <p className="text-xs text-gray-500">{getRoleDisplayName()}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {getUserDisplayName()}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {getRoleDisplayName()}
+                  </p>
                 </div>
               </button>
 
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                   <div className="p-3 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{getUserDisplayName()}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {getUserDisplayName()}
+                    </p>
                     <p className="text-xs text-gray-500">{user?.email}</p>
-                    <p className="text-xs text-blue-600 mt-1">{getRoleDisplayName()}</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      {getRoleDisplayName()}
+                    </p>
                   </div>
-                  
+
                   <div className="py-2">
                     <button
                       onClick={() => setShowDropdown(false)}
@@ -107,7 +122,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
                       <Settings className="h-4 w-4 mr-3" />
                       Account Settings
                     </button>
-                    
+
                     <button
                       onClick={handleSignOut}
                       className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"

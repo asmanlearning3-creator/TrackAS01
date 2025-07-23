@@ -23,6 +23,7 @@ The error occurs because **Terraform was executed in a directory that doesn't co
 I've created a complete Terraform infrastructure setup for your TruckFlow application:
 
 ### **📁 File Structure Created:**
+
 ```
 terraform/
 ├── main.tf                    # Main Terraform configuration
@@ -35,11 +36,13 @@ terraform/
 ## 🚀 **Quick Fix Steps**
 
 ### **Step 1: Navigate to Terraform Directory**
+
 ```bash
 cd terraform
 ```
 
 ### **Step 2: Install Terraform** (if not installed)
+
 ```bash
 # macOS
 brew install terraform
@@ -52,12 +55,14 @@ choco install terraform
 ```
 
 ### **Step 3: Configure Variables**
+
 ```bash
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars with your AWS settings
 ```
 
 ### **Step 4: Initialize and Plan**
+
 ```bash
 terraform init
 terraform plan
@@ -75,6 +80,7 @@ The Terraform configuration creates:
 ## 🔧 **Configuration Details**
 
 ### **Variables (terraform.tfvars)**
+
 ```hcl
 aws_region = "us-east-1"
 environment = "dev"
@@ -82,6 +88,7 @@ app_name = "truckflow"
 ```
 
 ### **Key Resources Created**
+
 ```hcl
 # S3 bucket for hosting
 resource "aws_s3_bucket" "website" {
@@ -97,23 +104,27 @@ resource "aws_cloudfront_distribution" "website" {
 ## 📤 **Deployment Workflow**
 
 ### **1. Build Application**
+
 ```bash
 npm run build
 ```
 
 ### **2. Deploy Infrastructure**
+
 ```bash
 cd terraform
 terraform apply
 ```
 
 ### **3. Upload Files**
+
 ```bash
 BUCKET_NAME=$(terraform output -raw website_bucket_name)
 aws s3 sync ../dist/ s3://$BUCKET_NAME --delete
 ```
 
 ### **4. Invalidate Cache**
+
 ```bash
 DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
 aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/*"
@@ -124,16 +135,20 @@ aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/
 ### **Common Issues & Solutions**
 
 #### **1. "No configuration files" Error**
+
 - ✅ **Solution**: Run terraform commands from `terraform/` directory
 - ❌ **Wrong**: Running from project root
 - ✅ **Correct**: Running from `terraform/` subdirectory
 
 #### **2. "Terraform not found"**
+
 - ✅ **Solution**: Install Terraform using package manager
 - Check: `terraform version`
 
 #### **3. "AWS credentials not configured"**
+
 - ✅ **Solution**: Configure AWS CLI
+
 ```bash
 aws configure
 # OR set environment variables
@@ -142,10 +157,12 @@ export AWS_SECRET_ACCESS_KEY="your-secret"
 ```
 
 #### **4. "Bucket name already exists"**
+
 - ✅ **Solution**: Change `app_name` in terraform.tfvars
 - S3 bucket names must be globally unique
 
 #### **5. "Access denied" errors**
+
 - ✅ **Solution**: Check AWS IAM permissions
 - Required permissions: S3, CloudFront, IAM
 
@@ -160,6 +177,7 @@ export AWS_SECRET_ACCESS_KEY="your-secret"
 ## 💰 **Cost Estimation**
 
 **Monthly costs (US East):**
+
 - S3 Storage: ~$0.023/GB
 - CloudFront: ~$0.085/GB (first 10TB)
 - S3 Requests: ~$0.0004/1000 GET requests
@@ -168,6 +186,7 @@ export AWS_SECRET_ACCESS_KEY="your-secret"
 ## 🔄 **CI/CD Integration**
 
 ### **GitHub Actions Example**
+
 ```yaml
 name: Deploy Infrastructure
 on:
@@ -199,6 +218,7 @@ cd terraform
 ```
 
 The script will:
+
 - ✅ Check Terraform installation
 - ✅ Verify AWS credentials
 - ✅ Create terraform.tfvars

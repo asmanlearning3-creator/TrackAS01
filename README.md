@@ -5,6 +5,7 @@ A comprehensive logistics and transportation management platform with role-based
 ## Features
 
 ### Authentication System
+
 - **Role-based Authentication**: Support for three user types:
   - **Logistics Companies**: Manage shipments, operators, and analytics
   - **Transport Operators**: Accept jobs, manage deliveries, and track vehicles
@@ -17,6 +18,7 @@ A comprehensive logistics and transportation management platform with role-based
 ### User Roles & Capabilities
 
 #### Logistics Companies
+
 - Create and manage shipments
 - Operator management and verification
 - Real-time analytics and reporting
@@ -24,6 +26,7 @@ A comprehensive logistics and transportation management platform with role-based
 - Fleet management
 
 #### Transport Operators
+
 - View and accept available jobs
 - Manage active shipments
 - Vehicle registration and verification
@@ -31,6 +34,7 @@ A comprehensive logistics and transportation management platform with role-based
 - Earnings and performance analytics
 
 #### Customers
+
 - Book shipments
 - Track deliveries in real-time
 - View shipment history
@@ -40,6 +44,7 @@ A comprehensive logistics and transportation management platform with role-based
 ## Quick Start
 
 ### Prerequisites
+
 - Node.js (v18 or higher)
 - npm or yarn
 - Supabase account (for authentication and database)
@@ -47,12 +52,14 @@ A comprehensive logistics and transportation management platform with role-based
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd truckflow
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -64,12 +71,14 @@ A comprehensive logistics and transportation management platform with role-based
    - Add your Supabase URL and anon key to the `.env` file
 
 4. **Run database migrations**
+
    ```bash
    # Apply the migrations to create the user_profiles table
    npx supabase db push
    ```
 
 5. **Start the development server**
+
    ```bash
    npm run dev
    ```
@@ -80,17 +89,20 @@ A comprehensive logistics and transportation management platform with role-based
    - Sign up or sign in to access the platform
 
 ### Demo Mode
+
 If you don't want to set up Supabase immediately, you can use the demo mode by clicking "Try Demo Mode" on the login page. This allows you to explore the interface without authentication.
 
 ## Authentication Setup
 
 ### Environment Variables
+
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ### Database Schema
+
 The application requires a `user_profiles` table that extends Supabase auth with role-specific information. Run the included migration to set this up:
 
 ```sql

@@ -1,6 +1,6 @@
-import React from 'react';
-import { Wifi, WifiOff, AlertCircle } from 'lucide-react';
-import { isConnected } from '../lib/supabase';
+import React from "react";
+import { Wifi, WifiOff, AlertCircle } from "lucide-react";
+import { isConnected } from "../lib/supabase";
 
 export const ConnectionStatus: React.FC = () => {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -15,11 +15,13 @@ export const ConnectionStatus: React.FC = () => {
   }
 
   return (
-    <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
-      isConnected 
-        ? 'bg-green-100 text-green-800'
-        : 'bg-yellow-100 text-yellow-800'
-    }`}>
+    <div
+      className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
+        isConnected
+          ? "bg-green-100 text-green-800"
+          : "bg-yellow-100 text-yellow-800"
+      }`}
+    >
       {isConnected ? (
         <>
           <Wifi className="w-4 h-4" />

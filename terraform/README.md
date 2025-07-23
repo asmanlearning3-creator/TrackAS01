@@ -14,24 +14,26 @@ The Terraform configuration creates:
 ## 📋 Prerequisites
 
 1. **Install Terraform**
+
    ```bash
    # For macOS
    brew install terraform
-   
+
    # For Ubuntu/Debian
    wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
    echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
    sudo apt update && sudo apt install terraform
-   
+
    # For Windows
    choco install terraform
    ```
 
 2. **Configure AWS Credentials**
+
    ```bash
    # Using AWS CLI
    aws configure
-   
+
    # Or set environment variables
    export AWS_ACCESS_KEY_ID="your-access-key"
    export AWS_SECRET_ACCESS_KEY="your-secret-key"
@@ -39,13 +41,14 @@ The Terraform configuration creates:
    ```
 
 3. **Install AWS CLI** (optional but recommended)
+
    ```bash
    # For macOS
    brew install awscli
-   
+
    # For Ubuntu/Debian
    sudo apt install awscli
-   
+
    # For Windows
    choco install awscli
    ```
@@ -53,27 +56,32 @@ The Terraform configuration creates:
 ## 🚀 Quick Start
 
 1. **Navigate to terraform directory**
+
    ```bash
    cd terraform
    ```
 
 2. **Copy and customize variables**
+
    ```bash
    cp terraform.tfvars.example terraform.tfvars
    # Edit terraform.tfvars with your values
    ```
 
 3. **Initialize Terraform**
+
    ```bash
    terraform init
    ```
 
 4. **Plan the deployment**
+
    ```bash
    terraform plan
    ```
 
 5. **Apply the configuration**
+
    ```bash
    terraform apply
    ```
@@ -125,12 +133,14 @@ terraform apply -var-file="prod.tfvars"
 ## 📤 Deployment Workflow
 
 ### 1. Build the Application
+
 ```bash
 # From project root
 npm run build
 ```
 
 ### 2. Deploy to S3
+
 ```bash
 # Get bucket name from Terraform output
 BUCKET_NAME=$(terraform output -raw website_bucket_name)
@@ -140,6 +150,7 @@ aws s3 sync ../dist/ s3://$BUCKET_NAME --delete
 ```
 
 ### 3. Invalidate CloudFront Cache
+
 ```bash
 # Get distribution ID from Terraform output
 DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
@@ -157,6 +168,7 @@ aws cloudfront create-invalidation --distribution-id $DISTRIBUTION_ID --paths "/
    - Make sure `main.tf` exists
 
 2. **AWS credentials not configured**
+
    ```bash
    aws configure
    # Or set environment variables
@@ -228,15 +240,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: hashicorp/setup-terraform@v1
-      
+
       - name: Terraform Init
         run: terraform init
         working-directory: terraform
-        
+
       - name: Terraform Plan
         run: terraform plan
         working-directory: terraform
-        
+
       - name: Terraform Apply
         run: terraform apply -auto-approve
         working-directory: terraform
@@ -256,7 +268,8 @@ Use [AWS Pricing Calculator](https://calculator.aws/) for accurate estimates.
 ## 📞 Support
 
 For infrastructure issues:
+
 1. Check Terraform documentation
-2. Review AWS service documentation  
+2. Review AWS service documentation
 3. Check CloudWatch logs for errors
 4. Open an issue in this repository

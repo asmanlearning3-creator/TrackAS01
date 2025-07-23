@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { UserRole } from '../../context/AuthContext';
-import LogisticsLogin from './LogisticsLogin';
-import OperatorLogin from './OperatorLogin';
-import CustomerLogin from './CustomerLogin';
-import { Building2, Truck, User, ArrowLeft } from 'lucide-react';
+import React, { useState } from "react";
+import { UserRole } from "../../context/AuthContext";
+import LogisticsLogin from "./LogisticsLogin";
+import OperatorLogin from "./OperatorLogin";
+import CustomerLogin from "./CustomerLogin";
+import { Building2, Truck, User, ArrowLeft } from "lucide-react";
 
 interface LoginProps {
   onBack?: () => void;
@@ -16,14 +16,10 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
     const LoginComponent = {
       logistics: LogisticsLogin,
       operator: OperatorLogin,
-      customer: CustomerLogin
+      customer: CustomerLogin,
     }[selectedRole];
 
-    return (
-      <LoginComponent 
-        onBack={() => setSelectedRole(null)}
-      />
-    );
+    return <LoginComponent onBack={() => setSelectedRole(null)} />;
   }
 
   return (
@@ -47,15 +43,13 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Welcome to TruckFlow
             </h1>
-            <p className="text-gray-600">
-              Select your role to continue
-            </p>
+            <p className="text-gray-600">Select your role to continue</p>
           </div>
 
           <div className="space-y-4">
             {/* Logistics Company Login */}
             <button
-              onClick={() => setSelectedRole('logistics')}
+              onClick={() => setSelectedRole("logistics")}
               className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 group"
             >
               <div className="flex items-center">
@@ -63,15 +57,19 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
                   <Building2 className="w-6 h-6 text-blue-600" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Logistics Company</h3>
-                  <p className="text-sm text-gray-600">Manage shipments and operations</p>
+                  <h3 className="font-semibold text-gray-900">
+                    Logistics Company
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Manage shipments and operations
+                  </p>
                 </div>
               </div>
             </button>
 
             {/* Transport Operator Login */}
             <button
-              onClick={() => setSelectedRole('operator')}
+              onClick={() => setSelectedRole("operator")}
               className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all duration-200 group"
             >
               <div className="flex items-center">
@@ -79,15 +77,19 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
                   <Truck className="w-6 h-6 text-green-600" />
                 </div>
                 <div className="text-left">
-                  <h3 className="font-semibold text-gray-900">Transport Operator</h3>
-                  <p className="text-sm text-gray-600">Accept and manage deliveries</p>
+                  <h3 className="font-semibold text-gray-900">
+                    Transport Operator
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    Accept and manage deliveries
+                  </p>
                 </div>
               </div>
             </button>
 
             {/* Customer Login */}
             <button
-              onClick={() => setSelectedRole('customer')}
+              onClick={() => setSelectedRole("customer")}
               className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all duration-200 group"
             >
               <div className="flex items-center">
@@ -104,7 +106,7 @@ const Login: React.FC<LoginProps> = ({ onBack }) => {
 
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-600">
-              New to TruckFlow?{' '}
+              New to TruckFlow?{" "}
               <button className="text-blue-600 hover:text-blue-700 font-medium">
                 Contact us for registration
               </button>

@@ -1,8 +1,8 @@
-import { supabase, dbHelpers } from '../lib/supabase';
-import { isConnected } from '../lib/supabase';
-import type { Database } from '../lib/supabase';
+import { supabase, dbHelpers } from "../lib/supabase";
+import { isConnected } from "../lib/supabase";
+import type { Database } from "../lib/supabase";
 
-type Tables = Database['public']['Tables'];
+type Tables = Database["public"]["Tables"];
 
 // Base API class with common functionality
 class BaseAPI {
@@ -17,7 +17,7 @@ class BaseAPI {
       console.warn(`${operation}: Supabase not connected. Using demo mode.`);
       return [] as never;
     }
-    
+
     console.error(`${operation} error in ${this.tableName}:`, error);
     throw new Error(error.message || `Failed to ${operation.toLowerCase()}`);
   }
@@ -25,10 +25,12 @@ class BaseAPI {
   protected async executeQuery(queryBuilder: any, operation: string) {
     // If not connected to Supabase, return empty array
     if (!isConnected) {
-      console.warn('Supabase not connected. Please configure your .env file with valid credentials.');
+      console.warn(
+        "Supabase not connected. Please configure your .env file with valid credentials.",
+      );
       return [];
     }
-    
+
     try {
       const { data, error } = await queryBuilder;
       if (error) this.handleError(error, operation);
@@ -42,13 +44,13 @@ class BaseAPI {
   protected getFallbackData(operation: string): any {
     // Return mock data when Supabase is not available
     switch (operation.toLowerCase()) {
-      case 'get companies':
+      case "get companies":
         return [];
-      case 'get vehicles':
+      case "get vehicles":
         return [];
-      case 'get operators':
+      case "get operators":
         return [];
-      case 'get shipments':
+      case "get shipments":
         return [];
       default:
         return null;
@@ -59,64 +61,55 @@ class BaseAPI {
 // Company API with automation
 export class CompanyAPI extends BaseAPI {
   constructor() {
-    super('companies');
+    super("companies");
   }
 
   async getAll() {
     return this.executeQuery(
       supabase
-        .from('companies')
-        .select('*')
-        .order('created_at', { ascending: false }),
-      'Get companies'
+        .from("companies")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      "Get companies",
     );
   }
 
   async getById(id: string) {
     return this.executeQuery(
-      supabase
-        .from('companies')
-        .select('*')
-        .eq('id', id)
-        .single(),
-      'Get company by ID'
+      supabase.from("companies").select("*").eq("id", id).single(),
+      "Get company by ID",
     );
   }
 
-  async create(company: Tables['companies']['Insert']) {
+  async create(company: Tables["companies"]["Insert"]) {
     return this.executeQuery(
-      supabase
-        .from('companies')
-        .insert(company)
-        .select()
-        .single(),
-      'Create company'
+      supabase.from("companies").insert(company).select().single(),
+      "Create company",
     );
   }
 
-  async update(id: string, updates: Tables['companies']['Update']) {
+  async update(id: string, updates: Tables["companies"]["Update"]) {
     return this.executeQuery(
-      supabase
-        .from('companies')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single(),
-      'Update company'
+      supabase.from("companies").update(updates).eq("id", id).select().single(),
+      "Update company",
     );
   }
 
-  async updateStatus(id: string, status: Tables['companies']['Row']['status'], rejectionReason?: string) {
-    const updates: Tables['companies']['Update'] = { 
+  async updateStatus(
+    id: string,
+    status: Tables["companies"]["Row"]["status"],
+    rejectionReason?: string,
+  ) {
+    const updates: Tables["companies"]["Update"] = {
       status,
-      rejection_reason: rejectionReason || null
+      rejection_reason: rejectionReason || null,
     };
 
-    if (status === 'approved') {
+    if (status === "approved") {
       updates.verification_status = {
         tin_verified: true,
         business_reg_verified: true,
-        documents_verified: true
+        documents_verified: true,
       };
     }
 
@@ -126,22 +119,18 @@ export class CompanyAPI extends BaseAPI {
   async getApproved() {
     return this.executeQuery(
       supabase
-        .from('companies')
-        .select('*')
-        .eq('status', 'approved')
-        .order('name'),
-      'Get approved companies'
+        .from("companies")
+        .select("*")
+        .eq("status", "approved")
+        .order("name"),
+      "Get approved companies",
     );
   }
 
   async getByApiKey(apiKey: string) {
     return this.executeQuery(
-      supabase
-        .from('companies')
-        .select('*')
-        .eq('api_key', apiKey)
-        .single(),
-      'Get company by API key'
+      supabase.from("companies").select("*").eq("api_key", apiKey).single(),
+      "Get company by API key",
     );
   }
 }
@@ -149,69 +138,62 @@ export class CompanyAPI extends BaseAPI {
 // Vehicle API with VCODE automation
 export class VehicleAPI extends BaseAPI {
   constructor() {
-    super('vehicles');
+    super("vehicles");
   }
 
   async getAll() {
     return this.executeQuery(
       supabase
-        .from('vehicles')
-        .select(`
+        .from("vehicles")
+        .select(
+          `
           *,
           companies (
             name,
             status
           )
-        `)
-        .order('created_at', { ascending: false }),
-      'Get vehicles'
+        `,
+        )
+        .order("created_at", { ascending: false }),
+      "Get vehicles",
     );
   }
 
   async getByCompany(companyId: string) {
     return this.executeQuery(
       supabase
-        .from('vehicles')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false }),
-      'Get vehicles by company'
+        .from("vehicles")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false }),
+      "Get vehicles by company",
     );
   }
 
-  async create(vehicle: Tables['vehicles']['Insert']) {
+  async create(vehicle: Tables["vehicles"]["Insert"]) {
     return this.executeQuery(
-      supabase
-        .from('vehicles')
-        .insert(vehicle)
-        .select()
-        .single(),
-      'Create vehicle'
+      supabase.from("vehicles").insert(vehicle).select().single(),
+      "Create vehicle",
     );
   }
 
-  async update(id: string, updates: Tables['vehicles']['Update']) {
+  async update(id: string, updates: Tables["vehicles"]["Update"]) {
     return this.executeQuery(
-      supabase
-        .from('vehicles')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single(),
-      'Update vehicle'
+      supabase.from("vehicles").update(updates).eq("id", id).select().single(),
+      "Update vehicle",
     );
   }
 
-  async updateStatus(id: string, status: Tables['vehicles']['Row']['status']) {
-    const updates: Tables['vehicles']['Update'] = { status };
+  async updateStatus(id: string, status: Tables["vehicles"]["Row"]["status"]) {
+    const updates: Tables["vehicles"]["Update"] = { status };
 
-    if (status === 'verified') {
+    if (status === "verified") {
       updates.verification_status = {
         registration_verified: true,
         insurance_verified: true,
-        license_verified: true
+        license_verified: true,
       };
-      updates.availability = 'available';
+      updates.availability = "available";
     }
 
     return this.update(id, updates);
@@ -220,32 +202,32 @@ export class VehicleAPI extends BaseAPI {
   async getAvailable() {
     return this.executeQuery(
       supabase
-        .from('vehicles')
-        .select('*')
-        .eq('status', 'verified')
-        .eq('availability', 'available')
-        .order('created_at'),
-      'Get available vehicles'
+        .from("vehicles")
+        .select("*")
+        .eq("status", "verified")
+        .eq("availability", "available")
+        .order("created_at"),
+      "Get available vehicles",
     );
   }
 
   async updateLocation(id: string, lat: number, lng: number, address?: string) {
-    const updates: Tables['vehicles']['Update'] = {
+    const updates: Tables["vehicles"]["Update"] = {
       current_location: dbHelpers.createPoint(lat, lng),
-      current_address: address || null
+      current_address: address || null,
     };
 
     return this.update(id, updates);
   }
 
   async findNearby(lat: number, lng: number, radiusKm: number = 50) {
-    const { data, error } = await supabase.rpc('find_nearby_vehicles', {
+    const { data, error } = await supabase.rpc("find_nearby_vehicles", {
       center_lat: lat,
       center_lng: lng,
-      radius_km: radiusKm
+      radius_km: radiusKm,
     });
 
-    if (error) this.handleError(error, 'Find nearby vehicles');
+    if (error) this.handleError(error, "Find nearby vehicles");
     return data;
   }
 }
@@ -253,14 +235,15 @@ export class VehicleAPI extends BaseAPI {
 // Operator API with performance tracking
 export class OperatorAPI extends BaseAPI {
   constructor() {
-    super('operators');
+    super("operators");
   }
 
   async getAll() {
     return this.executeQuery(
       supabase
-        .from('operators')
-        .select(`
+        .from("operators")
+        .select(
+          `
           *,
           vehicles (
             registration_number,
@@ -270,50 +253,42 @@ export class OperatorAPI extends BaseAPI {
           companies (
             name
           )
-        `)
-        .order('created_at', { ascending: false }),
-      'Get operators'
+        `,
+        )
+        .order("created_at", { ascending: false }),
+      "Get operators",
     );
   }
 
   async getByCompany(companyId: string) {
     return this.executeQuery(
       supabase
-        .from('operators')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('rating', { ascending: false }),
-      'Get operators by company'
+        .from("operators")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("rating", { ascending: false }),
+      "Get operators by company",
     );
   }
 
-  async create(operator: Tables['operators']['Insert']) {
+  async create(operator: Tables["operators"]["Insert"]) {
     return this.executeQuery(
-      supabase
-        .from('operators')
-        .insert(operator)
-        .select()
-        .single(),
-      'Create operator'
+      supabase.from("operators").insert(operator).select().single(),
+      "Create operator",
     );
   }
 
-  async update(id: string, updates: Tables['operators']['Update']) {
+  async update(id: string, updates: Tables["operators"]["Update"]) {
     return this.executeQuery(
-      supabase
-        .from('operators')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single(),
-      'Update operator'
+      supabase.from("operators").update(updates).eq("id", id).select().single(),
+      "Update operator",
     );
   }
 
-  async updateStatus(id: string, status: 'available' | 'busy' | 'offline') {
-    return this.update(id, { 
+  async updateStatus(id: string, status: "available" | "busy" | "offline") {
+    return this.update(id, {
       status,
-      last_active: new Date().toISOString()
+      last_active: new Date().toISOString(),
     });
   }
 
@@ -321,43 +296,50 @@ export class OperatorAPI extends BaseAPI {
     return this.update(id, {
       current_location: dbHelpers.createPoint(lat, lng),
       current_address: address || null,
-      last_active: new Date().toISOString()
+      last_active: new Date().toISOString(),
     });
   }
 
-  async updatePerformance(id: string, deliverySuccess: boolean, onTime: boolean) {
+  async updatePerformance(
+    id: string,
+    deliverySuccess: boolean,
+    onTime: boolean,
+  ) {
     const operator = await this.executeQuery(
       supabase
-        .from('operators')
-        .select('total_deliveries, successful_deliveries, on_time_rate')
-        .eq('id', id)
+        .from("operators")
+        .select("total_deliveries, successful_deliveries, on_time_rate")
+        .eq("id", id)
         .single(),
-      'Get operator for performance update'
+      "Get operator for performance update",
     );
 
     const newTotalDeliveries = operator.total_deliveries + 1;
-    const newSuccessfulDeliveries = operator.successful_deliveries + (deliverySuccess ? 1 : 0);
-    
+    const newSuccessfulDeliveries =
+      operator.successful_deliveries + (deliverySuccess ? 1 : 0);
+
     // Calculate new on-time rate
-    const currentOnTimeDeliveries = Math.round((operator.on_time_rate / 100) * operator.total_deliveries);
+    const currentOnTimeDeliveries = Math.round(
+      (operator.on_time_rate / 100) * operator.total_deliveries,
+    );
     const newOnTimeDeliveries = currentOnTimeDeliveries + (onTime ? 1 : 0);
     const newOnTimeRate = (newOnTimeDeliveries / newTotalDeliveries) * 100;
 
     return this.update(id, {
       total_deliveries: newTotalDeliveries,
       successful_deliveries: newSuccessfulDeliveries,
-      on_time_rate: Math.round(newOnTimeRate * 100) / 100
+      on_time_rate: Math.round(newOnTimeRate * 100) / 100,
     });
   }
 
   async getAvailable() {
     return this.executeQuery(
       supabase
-        .from('operators')
-        .select('*')
-        .eq('status', 'available')
-        .order('rating', { ascending: false }),
-      'Get available operators'
+        .from("operators")
+        .select("*")
+        .eq("status", "available")
+        .order("rating", { ascending: false }),
+      "Get available operators",
     );
   }
 }
@@ -365,59 +347,50 @@ export class OperatorAPI extends BaseAPI {
 // Customer API
 export class CustomerAPI extends BaseAPI {
   constructor() {
-    super('customers');
+    super("customers");
   }
 
   async getAll() {
     return this.executeQuery(
       supabase
-        .from('customers')
-        .select('*')
-        .order('created_at', { ascending: false }),
-      'Get customers'
+        .from("customers")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      "Get customers",
     );
   }
 
-  async create(customer: Tables['customers']['Insert']) {
+  async create(customer: Tables["customers"]["Insert"]) {
     return this.executeQuery(
-      supabase
-        .from('customers')
-        .insert(customer)
-        .select()
-        .single(),
-      'Create customer'
+      supabase.from("customers").insert(customer).select().single(),
+      "Create customer",
     );
   }
 
-  async upsert(customer: Tables['customers']['Insert']) {
+  async upsert(customer: Tables["customers"]["Insert"]) {
     return this.executeQuery(
       supabase
-        .from('customers')
-        .upsert(customer, { onConflict: 'phone' })
+        .from("customers")
+        .upsert(customer, { onConflict: "phone" })
         .select()
         .single(),
-      'Upsert customer'
+      "Upsert customer",
     );
   }
 
-  async update(id: string, updates: Tables['customers']['Update']) {
+  async update(id: string, updates: Tables["customers"]["Update"]) {
     return this.executeQuery(
-      supabase
-        .from('customers')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single(),
-      'Update customer'
+      supabase.from("customers").update(updates).eq("id", id).select().single(),
+      "Update customer",
     );
   }
 
   async incrementShipmentCount(id: string) {
-    const { data, error } = await supabase.rpc('increment_customer_shipments', {
-      customer_id: id
+    const { data, error } = await supabase.rpc("increment_customer_shipments", {
+      customer_id: id,
     });
 
-    if (error) this.handleError(error, 'Increment shipment count');
+    if (error) this.handleError(error, "Increment shipment count");
     return data;
   }
 }
@@ -425,14 +398,15 @@ export class CustomerAPI extends BaseAPI {
 // Shipment API with automation
 export class ShipmentAPI extends BaseAPI {
   constructor() {
-    super('shipments');
+    super("shipments");
   }
 
   async getAll() {
     return this.executeQuery(
       supabase
-        .from('shipments')
-        .select(`
+        .from("shipments")
+        .select(
+          `
           *,
           operators (
             name,
@@ -455,17 +429,19 @@ export class ShipmentAPI extends BaseAPI {
             automated,
             created_at
           )
-        `)
-        .order('created_at', { ascending: false }),
-      'Get shipments'
+        `,
+        )
+        .order("created_at", { ascending: false }),
+      "Get shipments",
     );
   }
 
   async getById(id: string) {
     return this.executeQuery(
       supabase
-        .from('shipments')
-        .select(`
+        .from("shipments")
+        .select(
+          `
           *,
           operators (
             name,
@@ -488,58 +464,59 @@ export class ShipmentAPI extends BaseAPI {
             automated,
             created_at
           )
-        `)
-        .eq('id', id)
+        `,
+        )
+        .eq("id", id)
         .single(),
-      'Get shipment by ID'
+      "Get shipment by ID",
     );
   }
 
-  async create(shipment: Tables['shipments']['Insert']) {
+  async create(shipment: Tables["shipments"]["Insert"]) {
     // Generate shipment ID
-    const { data: idData } = await supabase.rpc('generate_shipment_id');
+    const { data: idData } = await supabase.rpc("generate_shipment_id");
     shipment.id = idData;
 
     // Convert addresses to coordinates (you'd integrate with a geocoding service)
-    shipment.pickup_location = dbHelpers.createPoint(28.6139, 77.2090); // Default Delhi coordinates
-    shipment.destination_location = dbHelpers.createPoint(19.0760, 72.8777); // Default Mumbai coordinates
+    shipment.pickup_location = dbHelpers.createPoint(28.6139, 77.209); // Default Delhi coordinates
+    shipment.destination_location = dbHelpers.createPoint(19.076, 72.8777); // Default Mumbai coordinates
 
     const newShipment = await this.executeQuery(
-      supabase
-        .from('shipments')
-        .insert(shipment)
-        .select()
-        .single(),
-      'Create shipment'
+      supabase.from("shipments").insert(shipment).select().single(),
+      "Create shipment",
     );
 
     // Add initial update
-    await this.addUpdate(newShipment.id, 'Shipment created and awaiting operator assignment', 'info', true);
-    
+    await this.addUpdate(
+      newShipment.id,
+      "Shipment created and awaiting operator assignment",
+      "info",
+      true,
+    );
+
     return newShipment;
   }
 
-  async update(id: string, updates: Tables['shipments']['Update']) {
+  async update(id: string, updates: Tables["shipments"]["Update"]) {
     return this.executeQuery(
-      supabase
-        .from('shipments')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single(),
-      'Update shipment'
+      supabase.from("shipments").update(updates).eq("id", id).select().single(),
+      "Update shipment",
     );
   }
 
-  async updateStatus(id: string, status: Tables['shipments']['Row']['status'], message?: string) {
-    const updates: Tables['shipments']['Update'] = { status };
-    
-    if (status === 'delivered') {
+  async updateStatus(
+    id: string,
+    status: Tables["shipments"]["Row"]["status"],
+    message?: string,
+  ) {
+    const updates: Tables["shipments"]["Update"] = { status };
+
+    if (status === "delivered") {
       updates.actual_delivery = new Date().toISOString();
       updates.progress = 100;
-    } else if (status === 'in_transit') {
+    } else if (status === "in_transit") {
       updates.progress = 50;
-    } else if (status === 'picked_up') {
+    } else if (status === "picked_up") {
       updates.progress = 25;
     }
 
@@ -547,19 +524,26 @@ export class ShipmentAPI extends BaseAPI {
 
     // Add automated update
     if (message) {
-      await this.addUpdate(id, message, 'info', true);
+      await this.addUpdate(id, message, "info", true);
     }
 
     return updatedShipment;
   }
 
-  async addUpdate(shipmentId: string, message: string, type: 'info' | 'success' | 'warning' | 'error', automated: boolean = false, location?: { lat: number; lng: number }, address?: string) {
-    const update: Tables['shipment_updates']['Insert'] = {
+  async addUpdate(
+    shipmentId: string,
+    message: string,
+    type: "info" | "success" | "warning" | "error",
+    automated: boolean = false,
+    location?: { lat: number; lng: number },
+    address?: string,
+  ) {
+    const update: Tables["shipment_updates"]["Insert"] = {
       shipment_id: shipmentId,
       message,
       type,
       automated,
-      address
+      address,
     };
 
     if (location) {
@@ -567,45 +551,41 @@ export class ShipmentAPI extends BaseAPI {
     }
 
     return this.executeQuery(
-      supabase
-        .from('shipment_updates')
-        .insert(update)
-        .select()
-        .single(),
-      'Add shipment update'
+      supabase.from("shipment_updates").insert(update).select().single(),
+      "Add shipment update",
     );
   }
 
-  async getByStatus(status: Tables['shipments']['Row']['status']) {
+  async getByStatus(status: Tables["shipments"]["Row"]["status"]) {
     return this.executeQuery(
       supabase
-        .from('shipments')
-        .select('*')
-        .eq('status', status)
-        .order('created_at', { ascending: false }),
-      'Get shipments by status'
+        .from("shipments")
+        .select("*")
+        .eq("status", status)
+        .order("created_at", { ascending: false }),
+      "Get shipments by status",
     );
   }
 
   async getByOperator(operatorId: string) {
     return this.executeQuery(
       supabase
-        .from('shipments')
-        .select('*')
-        .eq('operator_id', operatorId)
-        .order('created_at', { ascending: false }),
-      'Get shipments by operator'
+        .from("shipments")
+        .select("*")
+        .eq("operator_id", operatorId)
+        .order("created_at", { ascending: false }),
+      "Get shipments by operator",
     );
   }
 
   async getByCompany(companyId: string) {
     return this.executeQuery(
       supabase
-        .from('shipments')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('created_at', { ascending: false }),
-      'Get shipments by company'
+        .from("shipments")
+        .select("*")
+        .eq("company_id", companyId)
+        .order("created_at", { ascending: false }),
+      "Get shipments by company",
     );
   }
 
@@ -614,16 +594,17 @@ export class ShipmentAPI extends BaseAPI {
     if (!isConnected) {
       return { unsubscribe: () => {} };
     }
-    
+
     return supabase
-      .channel('shipment_updates')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'shipments' 
-        }, 
-        callback
+      .channel("shipment_updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shipments",
+        },
+        callback,
       )
       .subscribe();
   }
@@ -632,16 +613,17 @@ export class ShipmentAPI extends BaseAPI {
     if (!isConnected) {
       return { unsubscribe: () => {} };
     }
-    
+
     return supabase
-      .channel('shipment_status_updates')
-      .on('postgres_changes', 
-        { 
-          event: '*', 
-          schema: 'public', 
-          table: 'shipment_updates' 
-        }, 
-        callback
+      .channel("shipment_status_updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "shipment_updates",
+        },
+        callback,
       )
       .subscribe();
   }
@@ -650,34 +632,30 @@ export class ShipmentAPI extends BaseAPI {
 // Notification API with automation
 export class NotificationAPI extends BaseAPI {
   constructor() {
-    super('notifications');
+    super("notifications");
   }
 
   async getAll(userId?: string, userType?: string) {
     let query = supabase
-      .from('notifications')
-      .select('*')
-      .order('created_at', { ascending: false })
+      .from("notifications")
+      .select("*")
+      .order("created_at", { ascending: false })
       .limit(50);
 
     if (userId) {
-      query = query.eq('user_id', userId);
+      query = query.eq("user_id", userId);
     }
     if (userType) {
-      query = query.eq('user_type', userType);
+      query = query.eq("user_type", userType);
     }
 
-    return this.executeQuery(query, 'Get notifications');
+    return this.executeQuery(query, "Get notifications");
   }
 
-  async create(notification: Tables['notifications']['Insert']) {
+  async create(notification: Tables["notifications"]["Insert"]) {
     const newNotification = await this.executeQuery(
-      supabase
-        .from('notifications')
-        .insert(notification)
-        .select()
-        .single(),
-      'Create notification'
+      supabase.from("notifications").insert(notification).select().single(),
+      "Create notification",
     );
 
     // Here you would integrate with SMS, email, and push notification services
@@ -689,54 +667,59 @@ export class NotificationAPI extends BaseAPI {
   async markAsRead(id: string) {
     return this.executeQuery(
       supabase
-        .from('notifications')
+        .from("notifications")
         .update({ read_at: new Date().toISOString() })
-        .eq('id', id)
+        .eq("id", id)
         .select()
         .single(),
-      'Mark notification as read'
+      "Mark notification as read",
     );
   }
 
   async markAllAsRead(userId: string, userType: string) {
     return this.executeQuery(
       supabase
-        .from('notifications')
+        .from("notifications")
         .update({ read_at: new Date().toISOString() })
-        .eq('user_id', userId)
-        .eq('user_type', userType)
-        .is('read_at', null),
-      'Mark all notifications as read'
+        .eq("user_id", userId)
+        .eq("user_type", userType)
+        .is("read_at", null),
+      "Mark all notifications as read",
     );
   }
 
   private async sendNotification(notification: any) {
     // Integration with notification services would go here
-    console.log('Sending notification:', notification);
-    
+    console.log("Sending notification:", notification);
+
     // Update sent_at timestamp
     await supabase
-      .from('notifications')
+      .from("notifications")
       .update({ sent_at: new Date().toISOString() })
-      .eq('id', notification.id);
+      .eq("id", notification.id);
   }
 
   // Subscribe to notifications
-  subscribeToNotifications(userId: string, userType: string, callback: (payload: any) => void) {
+  subscribeToNotifications(
+    userId: string,
+    userType: string,
+    callback: (payload: any) => void,
+  ) {
     if (!isConnected) {
       return { unsubscribe: () => {} };
     }
-    
+
     return supabase
       .channel(`notifications_${userId}`)
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`
-        }, 
-        callback
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        callback,
       )
       .subscribe();
   }
@@ -745,59 +728,55 @@ export class NotificationAPI extends BaseAPI {
 // Payment API
 export class PaymentAPI extends BaseAPI {
   constructor() {
-    super('payments');
+    super("payments");
   }
 
-  async create(payment: Tables['payments']['Insert']) {
+  async create(payment: Tables["payments"]["Insert"]) {
     return this.executeQuery(
-      supabase
-        .from('payments')
-        .insert(payment)
-        .select()
-        .single(),
-      'Create payment'
+      supabase.from("payments").insert(payment).select().single(),
+      "Create payment",
     );
   }
 
-  async updateStatus(id: string, status: Tables['payments']['Row']['payment_status'], transactionId?: string, gatewayResponse?: any) {
-    const updates: Tables['payments']['Update'] = { 
+  async updateStatus(
+    id: string,
+    status: Tables["payments"]["Row"]["payment_status"],
+    transactionId?: string,
+    gatewayResponse?: any,
+  ) {
+    const updates: Tables["payments"]["Update"] = {
       payment_status: status,
-      processed_at: new Date().toISOString()
+      processed_at: new Date().toISOString(),
     };
 
     if (transactionId) updates.transaction_id = transactionId;
     if (gatewayResponse) updates.gateway_response = gatewayResponse;
 
     return this.executeQuery(
-      supabase
-        .from('payments')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single(),
-      'Update payment status'
+      supabase.from("payments").update(updates).eq("id", id).select().single(),
+      "Update payment status",
     );
   }
 
   async getByShipment(shipmentId: string) {
     return this.executeQuery(
       supabase
-        .from('payments')
-        .select('*')
-        .eq('shipment_id', shipmentId)
-        .order('created_at', { ascending: false }),
-      'Get payments by shipment'
+        .from("payments")
+        .select("*")
+        .eq("shipment_id", shipmentId)
+        .order("created_at", { ascending: false }),
+      "Get payments by shipment",
     );
   }
 
   async getByOperator(operatorId: string) {
     return this.executeQuery(
       supabase
-        .from('payments')
-        .select('*')
-        .eq('operator_id', operatorId)
-        .order('created_at', { ascending: false }),
-      'Get payments by operator'
+        .from("payments")
+        .select("*")
+        .eq("operator_id", operatorId)
+        .order("created_at", { ascending: false }),
+      "Get payments by operator",
     );
   }
 }
@@ -805,47 +784,55 @@ export class PaymentAPI extends BaseAPI {
 // Analytics API
 export class AnalyticsAPI extends BaseAPI {
   constructor() {
-    super('analytics');
+    super("analytics");
   }
 
   async getDashboardStats(companyId?: string) {
     let shipmentsQuery = supabase
-      .from('shipments')
-      .select('status, model, price, created_at, actual_delivery, estimated_delivery');
+      .from("shipments")
+      .select(
+        "status, model, price, created_at, actual_delivery, estimated_delivery",
+      );
 
     let operatorsQuery = supabase
-      .from('operators')
-      .select('status, total_deliveries, earnings');
+      .from("operators")
+      .select("status, total_deliveries, earnings");
 
     if (companyId) {
-      shipmentsQuery = shipmentsQuery.eq('company_id', companyId);
-      operatorsQuery = operatorsQuery.eq('company_id', companyId);
+      shipmentsQuery = shipmentsQuery.eq("company_id", companyId);
+      operatorsQuery = operatorsQuery.eq("company_id", companyId);
     }
 
     const [shipmentStats, operatorStats] = await Promise.all([
-      this.executeQuery(shipmentsQuery, 'Get shipment stats'),
-      this.executeQuery(operatorsQuery, 'Get operator stats')
+      this.executeQuery(shipmentsQuery, "Get shipment stats"),
+      this.executeQuery(operatorsQuery, "Get operator stats"),
     ]);
 
     // Calculate metrics
     const totalShipments = shipmentStats?.length || 0;
-    const deliveredShipments = shipmentStats?.filter(s => s.status === 'delivered').length || 0;
-    const successRate = totalShipments > 0 ? (deliveredShipments / totalShipments) * 100 : 0;
-    const activeOperators = operatorStats?.filter(o => o.status !== 'offline').length || 0;
-    const totalRevenue = shipmentStats?.reduce((sum, s) => sum + (s.price || 0), 0) || 0;
+    const deliveredShipments =
+      shipmentStats?.filter((s) => s.status === "delivered").length || 0;
+    const successRate =
+      totalShipments > 0 ? (deliveredShipments / totalShipments) * 100 : 0;
+    const activeOperators =
+      operatorStats?.filter((o) => o.status !== "offline").length || 0;
+    const totalRevenue =
+      shipmentStats?.reduce((sum, s) => sum + (s.price || 0), 0) || 0;
 
     // Calculate average delivery time
-    const deliveredWithTimes = shipmentStats?.filter(s => 
-      s.status === 'delivered' && s.actual_delivery && s.created_at
-    ) || [];
-    
-    const avgDeliveryTimeHours = deliveredWithTimes.length > 0 
-      ? deliveredWithTimes.reduce((sum, s) => {
-          const created = new Date(s.created_at).getTime();
-          const delivered = new Date(s.actual_delivery).getTime();
-          return sum + (delivered - created) / (1000 * 60 * 60);
-        }, 0) / deliveredWithTimes.length
-      : 0;
+    const deliveredWithTimes =
+      shipmentStats?.filter(
+        (s) => s.status === "delivered" && s.actual_delivery && s.created_at,
+      ) || [];
+
+    const avgDeliveryTimeHours =
+      deliveredWithTimes.length > 0
+        ? deliveredWithTimes.reduce((sum, s) => {
+            const created = new Date(s.created_at).getTime();
+            const delivered = new Date(s.actual_delivery).getTime();
+            return sum + (delivered - created) / (1000 * 60 * 60);
+          }, 0) / deliveredWithTimes.length
+        : 0;
 
     return {
       totalShipments,
@@ -855,25 +842,25 @@ export class AnalyticsAPI extends BaseAPI {
       revenue: `₹${(totalRevenue / 100000).toFixed(1)}L`,
       routeEfficiency: 94.2, // This would need route optimization data
       topRoutes: await this.getTopRoutes(companyId),
-      operatorPerformance: await this.getTopOperators(companyId)
+      operatorPerformance: await this.getTopOperators(companyId),
     };
   }
 
   async getTopRoutes(companyId?: string, limit: number = 5) {
     let query = supabase
-      .from('shipments')
-      .select('pickup_address, destination_address, price')
-      .eq('status', 'delivered');
+      .from("shipments")
+      .select("pickup_address, destination_address, price")
+      .eq("status", "delivered");
 
     if (companyId) {
-      query = query.eq('company_id', companyId);
+      query = query.eq("company_id", companyId);
     }
 
-    const shipments = await this.executeQuery(query, 'Get route data');
+    const shipments = await this.executeQuery(query, "Get route data");
 
     // Group by route and calculate metrics
     const routeMap = new Map();
-    shipments?.forEach(s => {
+    shipments?.forEach((s) => {
       const route = `${s.pickup_address} → ${s.destination_address}`;
       if (!routeMap.has(route)) {
         routeMap.set(route, { shipments: 0, revenue: 0 });
@@ -888,7 +875,7 @@ export class AnalyticsAPI extends BaseAPI {
         route,
         shipments: data.shipments,
         revenue: `₹${(data.revenue / 1000).toFixed(1)}K`,
-        efficiency: `${Math.floor(Math.random() * 10) + 90}%` // Mock efficiency
+        efficiency: `${Math.floor(Math.random() * 10) + 90}%`, // Mock efficiency
       }))
       .sort((a, b) => b.shipments - a.shipments)
       .slice(0, limit);
@@ -896,50 +883,58 @@ export class AnalyticsAPI extends BaseAPI {
 
   async getTopOperators(companyId?: string, limit: number = 5) {
     let query = supabase
-      .from('operators')
-      .select('name, rating, total_deliveries, on_time_rate, earnings')
-      .order('rating', { ascending: false });
+      .from("operators")
+      .select("name, rating, total_deliveries, on_time_rate, earnings")
+      .order("rating", { ascending: false });
 
     if (companyId) {
-      query = query.eq('company_id', companyId);
+      query = query.eq("company_id", companyId);
     }
 
-    const operators = await this.executeQuery(query.limit(limit), 'Get top operators');
+    const operators = await this.executeQuery(
+      query.limit(limit),
+      "Get top operators",
+    );
 
-    return operators?.map(op => ({
-      name: op.name,
-      rating: op.rating,
-      deliveries: op.total_deliveries,
-      onTime: `${op.on_time_rate}%`,
-      earnings: `₹${op.earnings.toLocaleString()}`
-    })) || [];
+    return (
+      operators?.map((op) => ({
+        name: op.name,
+        rating: op.rating,
+        deliveries: op.total_deliveries,
+        onTime: `${op.on_time_rate}%`,
+        earnings: `₹${op.earnings.toLocaleString()}`,
+      })) || []
+    );
   }
 
   async getRealTimeMetrics(companyId?: string) {
     let activeShipmentsQuery = supabase
-      .from('shipments')
-      .select('status')
-      .in('status', ['assigned', 'picked_up', 'in_transit']);
+      .from("shipments")
+      .select("status")
+      .in("status", ["assigned", "picked_up", "in_transit"]);
 
     let availableOperatorsQuery = supabase
-      .from('operators')
-      .select('status')
-      .eq('status', 'available');
+      .from("operators")
+      .select("status")
+      .eq("status", "available");
 
     if (companyId) {
-      activeShipmentsQuery = activeShipmentsQuery.eq('company_id', companyId);
-      availableOperatorsQuery = availableOperatorsQuery.eq('company_id', companyId);
+      activeShipmentsQuery = activeShipmentsQuery.eq("company_id", companyId);
+      availableOperatorsQuery = availableOperatorsQuery.eq(
+        "company_id",
+        companyId,
+      );
     }
 
     const [activeShipments, availableOperators] = await Promise.all([
-      this.executeQuery(activeShipmentsQuery, 'Get active shipments'),
-      this.executeQuery(availableOperatorsQuery, 'Get available operators')
+      this.executeQuery(activeShipmentsQuery, "Get active shipments"),
+      this.executeQuery(availableOperatorsQuery, "Get available operators"),
     ]);
 
     return {
       activeShipments: activeShipments?.length || 0,
       availableOperators: availableOperators?.length || 0,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
     };
   }
 }
@@ -947,30 +942,29 @@ export class AnalyticsAPI extends BaseAPI {
 // Route API for optimization
 export class RouteAPI extends BaseAPI {
   constructor() {
-    super('routes');
+    super("routes");
   }
 
-  async create(route: Tables['routes']['Insert']) {
+  async create(route: Tables["routes"]["Insert"]) {
     return this.executeQuery(
-      supabase
-        .from('routes')
-        .insert(route)
-        .select()
-        .single(),
-      'Create route'
+      supabase.from("routes").insert(route).select().single(),
+      "Create route",
     );
   }
 
-  async optimizeRoute(shipmentId: string, waypoints: Array<{lat: number, lng: number}>) {
+  async optimizeRoute(
+    shipmentId: string,
+    waypoints: Array<{ lat: number; lng: number }>,
+  ) {
     // Here you would integrate with Google Maps Directions API or similar
     // For now, we'll create a mock optimized route
-    
+
     const optimizedRoute = {
       shipment_id: shipmentId,
       route_points: waypoints,
       total_distance: Math.random() * 500 + 50, // Mock distance
-      estimated_duration: '02:30:00', // Mock duration
-      optimized: true
+      estimated_duration: "02:30:00", // Mock duration
+      optimized: true,
     };
 
     return this.create(optimizedRoute);
@@ -1011,14 +1005,35 @@ export class TrackASAPI {
     const channels = [
       this.shipments.subscribeToUpdates(callback),
       this.shipments.subscribeToShipmentUpdates(callback),
-      supabase.channel('operators').on('postgres_changes', { event: '*', schema: 'public', table: 'operators' }, callback).subscribe(),
-      supabase.channel('vehicles').on('postgres_changes', { event: '*', schema: 'public', table: 'vehicles' }, callback).subscribe(),
-      supabase.channel('companies').on('postgres_changes', { event: '*', schema: 'public', table: 'companies' }, callback).subscribe(),
+      supabase
+        .channel("operators")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "operators" },
+          callback,
+        )
+        .subscribe(),
+      supabase
+        .channel("vehicles")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "vehicles" },
+          callback,
+        )
+        .subscribe(),
+      supabase
+        .channel("companies")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "companies" },
+          callback,
+        )
+        .subscribe(),
     ];
-    
+
     return () => {
-      channels.forEach(channel => {
-        if (channel && typeof channel.unsubscribe === 'function') {
+      channels.forEach((channel) => {
+        if (channel && typeof channel.unsubscribe === "function") {
           channel.unsubscribe();
         }
       });
@@ -1028,7 +1043,7 @@ export class TrackASAPI {
   // Utility functions
   utils = {
     generateShipmentId: async (): Promise<string> => {
-      const { data } = await supabase.rpc('generate_shipment_id');
+      const { data } = await supabase.rpc("generate_shipment_id");
       return data;
     },
 
@@ -1038,19 +1053,28 @@ export class TrackASAPI {
 
     calculateDistance: dbHelpers.calculateDistance,
 
-    calculatePrice: (distance: number, weight: number, urgency: 'standard' | 'urgent' | 'express'): number => {
+    calculatePrice: (
+      distance: number,
+      weight: number,
+      urgency: "standard" | "urgent" | "express",
+    ): number => {
       const baseRate = 10; // ₹10 per km
       const weightMultiplier = weight > 10 ? 1.5 : 1;
-      const urgencyMultiplier = urgency === 'express' ? 2 : urgency === 'urgent' ? 1.5 : 1;
-      
-      return Math.round(distance * baseRate * weightMultiplier * urgencyMultiplier);
+      const urgencyMultiplier =
+        urgency === "express" ? 2 : urgency === "urgent" ? 1.5 : 1;
+
+      return Math.round(
+        distance * baseRate * weightMultiplier * urgencyMultiplier,
+      );
     },
 
-    geocodeAddress: async (address: string): Promise<{lat: number, lng: number} | null> => {
+    geocodeAddress: async (
+      address: string,
+    ): Promise<{ lat: number; lng: number } | null> => {
       // Integration with geocoding service would go here
       // For now, return mock coordinates
-      return { lat: 28.6139, lng: 77.2090 };
-    }
+      return { lat: 28.6139, lng: 77.209 };
+    },
   };
 }
 

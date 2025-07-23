@@ -1,16 +1,16 @@
-import React, { createContext, useContext, ReactNode } from 'react';
-import { 
-  useCompanies, 
-  useVehicles, 
-  useShipments, 
-  useOperators, 
-  useNotifications, 
+import React, { createContext, useContext, ReactNode } from "react";
+import {
+  useCompanies,
+  useVehicles,
+  useShipments,
+  useOperators,
+  useNotifications,
   useAnalytics,
   useCustomers,
   usePayments,
   useRealTime,
-  useLocationTracking
-} from '../hooks/useSupabase';
+  useLocationTracking,
+} from "../hooks/useSupabase";
 
 interface DatabaseContextType {
   // Companies
@@ -18,7 +18,11 @@ interface DatabaseContextType {
   companiesLoading: boolean;
   companiesError: string | null;
   createCompany: (company: any) => Promise<any>;
-  updateCompanyStatus: (id: string, status: any, rejectionReason?: string) => Promise<any>;
+  updateCompanyStatus: (
+    id: string,
+    status: any,
+    rejectionReason?: string,
+  ) => Promise<any>;
   refetchCompanies: () => Promise<void>;
 
   // Vehicles
@@ -27,7 +31,12 @@ interface DatabaseContextType {
   vehiclesError: string | null;
   createVehicle: (vehicle: any) => Promise<any>;
   updateVehicleStatus: (id: string, status: any) => Promise<any>;
-  updateVehicleLocation: (id: string, lat: number, lng: number, address?: string) => Promise<any>;
+  updateVehicleLocation: (
+    id: string,
+    lat: number,
+    lng: number,
+    address?: string,
+  ) => Promise<any>;
   refetchVehicles: () => Promise<void>;
 
   // Operators
@@ -35,8 +44,17 @@ interface DatabaseContextType {
   operatorsLoading: boolean;
   operatorsError: string | null;
   updateOperatorStatus: (id: string, status: any) => Promise<any>;
-  updateOperatorLocation: (id: string, lat: number, lng: number, address?: string) => Promise<any>;
-  updateOperatorPerformance: (id: string, deliverySuccess: boolean, onTime: boolean) => Promise<any>;
+  updateOperatorLocation: (
+    id: string,
+    lat: number,
+    lng: number,
+    address?: string,
+  ) => Promise<any>;
+  updateOperatorPerformance: (
+    id: string,
+    deliverySuccess: boolean,
+    onTime: boolean,
+  ) => Promise<any>;
   refetchOperators: () => Promise<void>;
 
   // Customers
@@ -53,8 +71,18 @@ interface DatabaseContextType {
   shipmentsError: string | null;
   createShipment: (shipment: any) => Promise<any>;
   updateShipment: (id: string, updates: any) => Promise<any>;
-  updateShipmentStatus: (id: string, status: any, message?: string) => Promise<any>;
-  addShipmentUpdate: (shipmentId: string, message: string, type: any, location?: { lat: number; lng: number }, address?: string) => Promise<void>;
+  updateShipmentStatus: (
+    id: string,
+    status: any,
+    message?: string,
+  ) => Promise<any>;
+  addShipmentUpdate: (
+    shipmentId: string,
+    message: string,
+    type: any,
+    location?: { lat: number; lng: number },
+    address?: string,
+  ) => Promise<void>;
   refetchShipments: () => Promise<void>;
 
   // Notifications
@@ -80,13 +108,18 @@ interface DatabaseContextType {
   paymentsLoading: boolean;
   paymentsError: string | null;
   createPayment: (payment: any) => Promise<any>;
-  updatePaymentStatus: (id: string, status: any, transactionId?: string, gatewayResponse?: any) => Promise<any>;
+  updatePaymentStatus: (
+    id: string,
+    status: any,
+    transactionId?: string,
+    gatewayResponse?: any,
+  ) => Promise<any>;
   refetchPayments: () => Promise<void>;
 
   // Real-time & Location
   isConnected: boolean;
   lastUpdate: Date | null;
-  currentLocation: {lat: number, lng: number} | null;
+  currentLocation: { lat: number; lng: number } | null;
   locationError: string | null;
   getCurrentLocation: () => void;
   watchLocation: () => (() => void) | null;
@@ -97,15 +130,15 @@ const DatabaseContext = createContext<DatabaseContextType | null>(null);
 interface DatabaseProviderProps {
   children: ReactNode;
   userId?: string;
-  userType?: 'company' | 'operator' | 'customer';
+  userType?: "company" | "operator" | "customer";
   companyId?: string;
 }
 
-export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ 
-  children, 
-  userId, 
-  userType, 
-  companyId 
+export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
+  children,
+  userId,
+  userType,
+  companyId,
 }) => {
   // Use all the custom hooks
   const companiesHook = useCompanies();
@@ -117,7 +150,12 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
   const analyticsHook = useAnalytics(companyId);
   const paymentsHook = usePayments();
   const { isConnected, lastUpdate } = useRealTime();
-  const { location, error: locationError, getCurrentLocation, watchLocation } = useLocationTracking();
+  const {
+    location,
+    error: locationError,
+    getCurrentLocation,
+    watchLocation,
+  } = useLocationTracking();
 
   const contextValue: DatabaseContextType = {
     // Companies
@@ -196,7 +234,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
     currentLocation: location,
     locationError,
     getCurrentLocation,
-    watchLocation
+    watchLocation,
   };
 
   return (
@@ -209,7 +247,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({
 export const useDatabase = () => {
   const context = useContext(DatabaseContext);
   if (!context) {
-    throw new Error('useDatabase must be used within a DatabaseProvider');
+    throw new Error("useDatabase must be used within a DatabaseProvider");
   }
   return context;
 };
@@ -230,7 +268,7 @@ export const useConnectionStatus = () => {
 
 export const useRealTimeUpdates = (callback: (data: any) => void) => {
   const { lastUpdate } = useDatabase();
-  
+
   React.useEffect(() => {
     if (lastUpdate) {
       callback({ timestamp: lastUpdate });
@@ -241,14 +279,14 @@ export const useRealTimeUpdates = (callback: (data: any) => void) => {
 // Specialized hooks for different user types
 export const useLogisticsData = (companyId: string) => {
   const db = useDatabase();
-  
+
   return {
     // Company-specific data
-    vehicles: db.vehicles.filter(v => v.company_id === companyId),
-    operators: db.operators.filter(o => o.company_id === companyId),
-    shipments: db.shipments.filter(s => s.company_id === companyId),
+    vehicles: db.vehicles.filter((v) => v.company_id === companyId),
+    operators: db.operators.filter((o) => o.company_id === companyId),
+    shipments: db.shipments.filter((s) => s.company_id === companyId),
     analytics: db.analytics,
-    
+
     // Actions
     createVehicle: db.createVehicle,
     createShipment: db.createShipment,
@@ -259,15 +297,15 @@ export const useLogisticsData = (companyId: string) => {
 
 export const useOperatorData = (operatorId: string) => {
   const db = useDatabase();
-  
+
   return {
     // Operator-specific data
-    assignedShipments: db.shipments.filter(s => s.operator_id === operatorId),
-    availableJobs: db.shipments.filter(s => s.status === 'pending'),
-    earnings: db.payments.filter(p => p.operator_id === operatorId),
-    
+    assignedShipments: db.shipments.filter((s) => s.operator_id === operatorId),
+    availableJobs: db.shipments.filter((s) => s.status === "pending"),
+    earnings: db.payments.filter((p) => p.operator_id === operatorId),
+
     // Actions
-    updateLocation: (lat: number, lng: number, address?: string) => 
+    updateLocation: (lat: number, lng: number, address?: string) =>
       db.updateOperatorLocation(operatorId, lat, lng, address),
     updateShipmentStatus: db.updateShipmentStatus,
     addShipmentUpdate: db.addShipmentUpdate,
@@ -276,12 +314,14 @@ export const useOperatorData = (operatorId: string) => {
 
 export const useCustomerData = (customerId: string) => {
   const db = useDatabase();
-  
+
   return {
     // Customer-specific data
-    myShipments: db.shipments.filter(s => s.customer_id === customerId),
-    notifications: db.notifications.filter(n => n.user_id === customerId && n.user_type === 'customer'),
-    
+    myShipments: db.shipments.filter((s) => s.customer_id === customerId),
+    notifications: db.notifications.filter(
+      (n) => n.user_id === customerId && n.user_type === "customer",
+    ),
+
     // Actions
     createShipment: db.createShipment,
     markNotificationAsRead: db.markNotificationAsRead,

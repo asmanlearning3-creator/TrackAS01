@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { Mail, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { Mail, ArrowLeft, AlertCircle, CheckCircle } from "lucide-react";
 
 interface PasswordResetProps {
   onBack: () => void;
@@ -8,25 +8,27 @@ interface PasswordResetProps {
 
 const PasswordReset: React.FC<PasswordResetProps> = ({ onBack }) => {
   const { resetPassword } = useAuth();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
 
     const { error } = await resetPassword(email);
-    
+
     if (error) {
       setError(error.message);
     } else {
-      setMessage('Password reset email sent! Check your inbox for further instructions.');
+      setMessage(
+        "Password reset email sent! Check your inbox for further instructions.",
+      );
     }
-    
+
     setLoading(false);
   };
 
@@ -50,7 +52,8 @@ const PasswordReset: React.FC<PasswordResetProps> = ({ onBack }) => {
               Reset Password
             </h1>
             <p className="text-gray-600">
-              Enter your email address and we'll send you a link to reset your password
+              Enter your email address and we'll send you a link to reset your
+              password
             </p>
           </div>
 
@@ -91,14 +94,14 @@ const PasswordReset: React.FC<PasswordResetProps> = ({ onBack }) => {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Sending...' : 'Send Reset Link'}
+              {loading ? "Sending..." : "Send Reset Link"}
             </button>
           </form>
 
           {message && (
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
-                Didn't receive the email?{' '}
+                Didn't receive the email?{" "}
                 <button
                   onClick={handleSubmit}
                   className="text-blue-600 hover:text-blue-700 font-medium"

@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import { Truck, ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle, Phone, User } from 'lucide-react';
-import PasswordReset from './PasswordReset';
+import React, { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import {
+  Truck,
+  ArrowLeft,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Phone,
+  User,
+} from "lucide-react";
+import PasswordReset from "./PasswordReset";
 
 interface OperatorLoginProps {
   onBack: () => void;
@@ -10,51 +20,53 @@ interface OperatorLoginProps {
 const OperatorLogin: React.FC<OperatorLoginProps> = ({ onBack }) => {
   const { signIn, signUp, loading } = useAuth();
   const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [signUpData, setSignUpData] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    licenseNumber: '',
-    vehicleNumber: '',
-    vehicleType: ''
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    licenseNumber: "",
+    vehicleNumber: "",
+    vehicleType: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     if (isSignUp) {
       if (signUpData.password !== signUpData.confirmPassword) {
-        setError('Passwords do not match');
+        setError("Passwords do not match");
         return;
       }
 
       const { error } = await signUp(signUpData.email, signUpData.password, {
-        role: 'operator',
+        role: "operator",
         firstName: signUpData.firstName,
         lastName: signUpData.lastName,
         phone: signUpData.phone,
         licenseNumber: signUpData.licenseNumber,
         vehicleNumber: signUpData.vehicleNumber,
-        vehicleType: signUpData.vehicleType
+        vehicleType: signUpData.vehicleType,
       });
 
       if (error) {
         setError(error.message);
       } else {
-        setSuccess('Registration successful! Please check your email to verify your account.');
+        setSuccess(
+          "Registration successful! Please check your email to verify your account.",
+        );
       }
       return;
     }
@@ -65,12 +77,14 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onBack }) => {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     if (isSignUp) {
-      setSignUpData(prev => ({ ...prev, [name]: value }));
+      setSignUpData((prev) => ({ ...prev, [name]: value }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
@@ -95,10 +109,12 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onBack }) => {
               <Truck className="w-8 h-8 text-green-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {isSignUp ? 'Join as Operator' : 'Operator Portal'}
+              {isSignUp ? "Join as Operator" : "Operator Portal"}
             </h1>
             <p className="text-gray-600">
-              {isSignUp ? 'Register to start accepting shipments' : 'Sign in to manage your deliveries'}
+              {isSignUp
+                ? "Register to start accepting shipments"
+                : "Sign in to manage your deliveries"}
             </p>
           </div>
 
@@ -248,7 +264,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onBack }) => {
               </label>
               <div className="relative">
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={isSignUp ? signUpData.password : formData.password}
                   onChange={handleInputChange}
@@ -262,7 +278,11 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onBack }) => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -274,7 +294,7 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onBack }) => {
                 </label>
                 <div className="relative">
                   <input
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     name="confirmPassword"
                     value={signUpData.confirmPassword}
                     onChange={handleInputChange}
@@ -290,8 +310,13 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onBack }) => {
             {!isSignUp && (
               <div className="flex items-center justify-between">
                 <label className="flex items-center">
-                  <input type="checkbox" className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500" />
-                  <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-600">
+                    Remember me
+                  </span>
                 </label>
                 <button
                   type="button"
@@ -308,18 +333,22 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onBack }) => {
               disabled={loading}
               className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Processing...' : (isSignUp ? 'Register as Operator' : 'Sign In')}
+              {loading
+                ? "Processing..."
+                : isSignUp
+                  ? "Register as Operator"
+                  : "Sign In"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
               <button
                 onClick={() => setIsSignUp(!isSignUp)}
                 className="text-green-600 hover:text-green-700 font-medium"
               >
-                {isSignUp ? 'Sign in here' : 'Register here'}
+                {isSignUp ? "Sign in here" : "Register here"}
               </button>
             </p>
           </div>
@@ -327,8 +356,9 @@ const OperatorLogin: React.FC<OperatorLoginProps> = ({ onBack }) => {
           {isSignUp && (
             <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800">
-                <strong>Benefits of joining:</strong> Access to verified shipments, 
-                competitive rates, and direct payments through our platform.
+                <strong>Benefits of joining:</strong> Access to verified
+                shipments, competitive rates, and direct payments through our
+                platform.
               </p>
             </div>
           )}

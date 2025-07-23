@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
-import { Bell, X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import React, { useState } from "react";
+import {
+  Bell,
+  X,
+  CheckCircle,
+  AlertCircle,
+  Info,
+  AlertTriangle,
+} from "lucide-react";
+import { useApp } from "../context/AppContext";
 
 const NotificationCenter: React.FC = () => {
   const { state, dispatch } = useApp();
@@ -8,24 +15,32 @@ const NotificationCenter: React.FC = () => {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'success': return CheckCircle;
-      case 'warning': return AlertTriangle;
-      case 'error': return AlertCircle;
-      default: return Info;
+      case "success":
+        return CheckCircle;
+      case "warning":
+        return AlertTriangle;
+      case "error":
+        return AlertCircle;
+      default:
+        return Info;
     }
   };
 
   const getIconColor = (type: string) => {
     switch (type) {
-      case 'success': return 'text-green-500';
-      case 'warning': return 'text-yellow-500';
-      case 'error': return 'text-red-500';
-      default: return 'text-blue-500';
+      case "success":
+        return "text-green-500";
+      case "warning":
+        return "text-yellow-500";
+      case "error":
+        return "text-red-500";
+      default:
+        return "text-blue-500";
     }
   };
 
   const handleMarkAsRead = (id: string) => {
-    dispatch({ type: 'MARK_NOTIFICATION_READ', payload: id });
+    dispatch({ type: "MARK_NOTIFICATION_READ", payload: id });
   };
 
   const formatTimestamp = (timestamp: string) => {
@@ -33,8 +48,8 @@ const NotificationCenter: React.FC = () => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
-    
-    if (minutes < 1) return 'Just now';
+
+    if (minutes < 1) return "Just now";
     if (minutes < 60) return `${minutes}m ago`;
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `${hours}h ago`;
@@ -42,7 +57,7 @@ const NotificationCenter: React.FC = () => {
     return `${days}d ago`;
   };
 
-  const unreadCount = state.notifications.filter(n => !n.read).length;
+  const unreadCount = state.notifications.filter((n) => !n.read).length;
 
   return (
     <div className="relative">
@@ -53,7 +68,7 @@ const NotificationCenter: React.FC = () => {
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-            {unreadCount > 99 ? '99+' : unreadCount}
+            {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </button>
@@ -70,7 +85,9 @@ const NotificationCenter: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Notifications
                   {unreadCount > 0 && (
-                    <span className="ml-2 text-sm text-gray-500">({unreadCount} unread)</span>
+                    <span className="ml-2 text-sm text-gray-500">
+                      ({unreadCount} unread)
+                    </span>
                   )}
                 </h3>
                 <button
@@ -81,7 +98,7 @@ const NotificationCenter: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="max-h-80 overflow-y-auto">
               {state.notifications.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">
@@ -92,19 +109,23 @@ const NotificationCenter: React.FC = () => {
                 state.notifications.map((notification) => {
                   const Icon = getIcon(notification.type);
                   const isUnread = !notification.read;
-                  
+
                   return (
                     <div
                       key={notification.id}
                       onClick={() => handleMarkAsRead(notification.id)}
                       className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
-                        isUnread ? 'bg-blue-50' : ''
+                        isUnread ? "bg-blue-50" : ""
                       }`}
                     >
                       <div className="flex items-start space-x-3">
-                        <Icon className={`h-5 w-5 mt-0.5 ${getIconColor(notification.type)}`} />
+                        <Icon
+                          className={`h-5 w-5 mt-0.5 ${getIconColor(notification.type)}`}
+                        />
                         <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-medium text-gray-900 ${isUnread ? 'font-semibold' : ''}`}>
+                          <p
+                            className={`text-sm font-medium text-gray-900 ${isUnread ? "font-semibold" : ""}`}
+                          >
                             {notification.title}
                           </p>
                           <p className="text-sm text-gray-600 mt-1 line-clamp-2">
@@ -123,7 +144,7 @@ const NotificationCenter: React.FC = () => {
                 })
               )}
             </div>
-            
+
             {state.notifications.length > 0 && (
               <div className="p-3 border-t border-gray-200 bg-gray-50">
                 <button className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium">

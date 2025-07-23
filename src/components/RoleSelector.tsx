@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Building2, 
-  Truck, 
-  User, 
-  Code, 
-  ArrowRight, 
-  Users, 
-  Shield, 
-  LogIn, 
-  FileText, 
-  Package, 
-  MapPin, 
-  CheckCircle, 
-  CreditCard, 
+import React, { useState, useEffect } from "react";
+import {
+  Building2,
+  Truck,
+  User,
+  Code,
+  ArrowRight,
+  Users,
+  Shield,
+  LogIn,
+  FileText,
+  Package,
+  MapPin,
+  CheckCircle,
+  CreditCard,
   Star,
   Navigation,
   Clock,
@@ -23,11 +23,11 @@ import {
   Eye,
   Zap,
   Target,
-  Globe
-} from 'lucide-react';
+  Globe,
+} from "lucide-react";
 
 interface RoleSelectorProps {
-  onRoleSelect: (role: 'logistics' | 'operator' | 'customer') => void;
+  onRoleSelect: (role: "logistics" | "operator" | "customer") => void;
 }
 
 const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
@@ -40,220 +40,261 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
 
   const userRoles = [
     {
-      title: 'Customer',
-      description: 'Tracks consignments in real-time',
+      title: "Customer",
+      description: "Tracks consignments in real-time",
       icon: Users,
-      color: 'bg-blue-500',
-      features: ['Real-time tracking', 'Delivery notifications', 'Order history']
+      color: "bg-blue-500",
+      features: [
+        "Real-time tracking",
+        "Delivery notifications",
+        "Order history",
+      ],
     },
     {
-      title: 'Vehicle Operator',
-      description: 'Manages assigned shipments',
+      title: "Vehicle Operator",
+      description: "Manages assigned shipments",
       icon: Truck,
-      color: 'bg-green-500',
-      features: ['Job assignments', 'Route optimization', 'Earnings tracking']
+      color: "bg-green-500",
+      features: ["Job assignments", "Route optimization", "Earnings tracking"],
     },
     {
-      title: 'Logistics Company',
-      description: 'Controls shipments, vehicles, and performance',
+      title: "Logistics Company",
+      description: "Controls shipments, vehicles, and performance",
       icon: Building2,
-      color: 'bg-purple-500',
-      features: ['Fleet management', 'Analytics dashboard', 'Performance monitoring']
+      color: "bg-purple-500",
+      features: [
+        "Fleet management",
+        "Analytics dashboard",
+        "Performance monitoring",
+      ],
     },
     {
-      title: 'TrackAS Admin',
-      description: 'Oversees the entire platform',
+      title: "TrackAS Admin",
+      description: "Oversees the entire platform",
       icon: Shield,
-      color: 'bg-orange-500',
-      features: ['System oversight', 'User verification', 'Platform analytics']
-    }
+      color: "bg-orange-500",
+      features: ["System oversight", "User verification", "Platform analytics"],
+    },
   ];
 
   const operationalSteps = [
     {
       id: 1,
-      title: 'Login & Dashboard Access',
-      description: 'Secure authentication and role-based dashboard access',
+      title: "Login & Dashboard Access",
+      description: "Secure authentication and role-based dashboard access",
       icon: LogIn,
-      color: 'bg-blue-500',
+      color: "bg-blue-500",
       details: [
-        'Clean login interface with email/phone + password',
-        'Multi-factor authentication for enhanced security',
-        'Role-specific dashboard redirection',
-        'Operators see available shipment assignments',
-        'Logistics companies access control panel',
-        'Admins view comprehensive system metrics'
+        "Clean login interface with email/phone + password",
+        "Multi-factor authentication for enhanced security",
+        "Role-specific dashboard redirection",
+        "Operators see available shipment assignments",
+        "Logistics companies access control panel",
+        "Admins view comprehensive system metrics",
       ],
-      visual: 'Login interface with role-based routing'
+      visual: "Login interface with role-based routing",
     },
     {
       id: 2,
-      title: 'Registration & Verification',
-      description: 'Comprehensive onboarding for new users',
+      title: "Registration & Verification",
+      description: "Comprehensive onboarding for new users",
       icon: FileText,
-      color: 'bg-green-500',
+      color: "bg-green-500",
       details: [
-        'Subscription Model: Company registration with fleet details',
-        'Pay-Per-Shipment: Individual operator registration',
-        'Document verification: Business, Driver, Vehicle licenses',
-        'Bank account verification for payment processing',
-        'Automated verification workflow with 24-48 hour timeline',
-        'Real-time status updates throughout the process'
+        "Subscription Model: Company registration with fleet details",
+        "Pay-Per-Shipment: Individual operator registration",
+        "Document verification: Business, Driver, Vehicle licenses",
+        "Bank account verification for payment processing",
+        "Automated verification workflow with 24-48 hour timeline",
+        "Real-time status updates throughout the process",
       ],
-      visual: 'Multi-step registration wizard with document upload'
+      visual: "Multi-step registration wizard with document upload",
     },
     {
       id: 3,
-      title: 'Shipment Creation',
-      description: 'Intelligent shipment booking system',
+      title: "Shipment Creation",
+      description: "Intelligent shipment booking system",
       icon: Package,
-      color: 'bg-purple-500',
+      color: "bg-purple-500",
       details: [
-        'Pickup and destination address input',
-        'Consignment weight, volume, and dimensions',
-        'Special handling requirements specification',
-        'Delivery deadline and urgency level selection',
-        'Automated or manual pricing calculation',
-        'Customer contact information management'
+        "Pickup and destination address input",
+        "Consignment weight, volume, and dimensions",
+        "Special handling requirements specification",
+        "Delivery deadline and urgency level selection",
+        "Automated or manual pricing calculation",
+        "Customer contact information management",
       ],
-      visual: 'Interactive shipment creation form with map integration'
+      visual: "Interactive shipment creation form with map integration",
     },
     {
       id: 4,
-      title: 'AI-Powered Assignment & Matching',
-      description: 'Smart operator matching and assignment system',
+      title: "AI-Powered Assignment & Matching",
+      description: "Smart operator matching and assignment system",
       icon: Zap,
-      color: 'bg-yellow-500',
+      color: "bg-yellow-500",
       details: [
-        'Subscription Model: Automatic VCODE-based vehicle assignment',
-        'Pay-Per-Shipment: AI matching by proximity and reliability',
-        'Real-time operator availability checking',
-        'Automatic fallback to next best operator if declined',
-        'Load balancing across fleet for optimal efficiency',
-        'Priority handling for urgent shipments'
+        "Subscription Model: Automatic VCODE-based vehicle assignment",
+        "Pay-Per-Shipment: AI matching by proximity and reliability",
+        "Real-time operator availability checking",
+        "Automatic fallback to next best operator if declined",
+        "Load balancing across fleet for optimal efficiency",
+        "Priority handling for urgent shipments",
       ],
-      visual: 'Animated matching algorithm with map visualization'
+      visual: "Animated matching algorithm with map visualization",
     },
     {
       id: 5,
-      title: 'Pickup & Transit Management',
-      description: 'Real-time tracking and route optimization',
+      title: "Pickup & Transit Management",
+      description: "Real-time tracking and route optimization",
       icon: Navigation,
-      color: 'bg-indigo-500',
+      color: "bg-indigo-500",
       details: [
-        'Operator arrival confirmation at pickup location',
-        'AI-suggested optimal route navigation',
-        'Live GPS tracking with 30-second updates',
-        'Automated notifications to company and customer',
-        'Traffic and weather-based route adjustments',
-        'Emergency contact and support integration'
+        "Operator arrival confirmation at pickup location",
+        "AI-suggested optimal route navigation",
+        "Live GPS tracking with 30-second updates",
+        "Automated notifications to company and customer",
+        "Traffic and weather-based route adjustments",
+        "Emergency contact and support integration",
       ],
-      visual: 'Live tracking interface with route optimization'
+      visual: "Live tracking interface with route optimization",
     },
     {
       id: 6,
-      title: 'Delivery Confirmation & Proof',
-      description: 'Comprehensive delivery verification system',
+      title: "Delivery Confirmation & Proof",
+      description: "Comprehensive delivery verification system",
       icon: CheckCircle,
-      color: 'bg-emerald-500',
+      color: "bg-emerald-500",
       details: [
-        'GPS-verified arrival at destination',
-        'Digital signature capture from recipient',
-        'Photo documentation of delivered items',
-        'Condition assessment and damage reporting',
-        'Instant upload to TrackAS cloud platform',
-        'Automated delivery confirmation notifications'
+        "GPS-verified arrival at destination",
+        "Digital signature capture from recipient",
+        "Photo documentation of delivered items",
+        "Condition assessment and damage reporting",
+        "Instant upload to TrackAS cloud platform",
+        "Automated delivery confirmation notifications",
       ],
-      visual: 'Mobile delivery confirmation interface'
+      visual: "Mobile delivery confirmation interface",
     },
     {
       id: 7,
-      title: 'Payment Processing',
-      description: 'Automated payment and invoicing system',
+      title: "Payment Processing",
+      description: "Automated payment and invoicing system",
       icon: CreditCard,
-      color: 'bg-pink-500',
+      color: "bg-pink-500",
       details: [
-        'Dynamic pricing based on distance, weight, and urgency',
-        'Automated invoice generation and approval workflow',
-        'Secure payment processing with multiple methods',
-        'Direct bank transfer to operator accounts',
-        'Real-time payment status tracking',
-        'Comprehensive financial reporting and analytics'
+        "Dynamic pricing based on distance, weight, and urgency",
+        "Automated invoice generation and approval workflow",
+        "Secure payment processing with multiple methods",
+        "Direct bank transfer to operator accounts",
+        "Real-time payment status tracking",
+        "Comprehensive financial reporting and analytics",
       ],
-      visual: 'Payment dashboard with transaction history'
+      visual: "Payment dashboard with transaction history",
     },
     {
       id: 8,
-      title: 'Analytics & Continuous Improvement',
-      description: 'Data-driven insights and performance optimization',
+      title: "Analytics & Continuous Improvement",
+      description: "Data-driven insights and performance optimization",
       icon: BarChart3,
-      color: 'bg-teal-500',
+      color: "bg-teal-500",
       details: [
-        'Customer and operator rating system',
-        'Performance analytics: success rate, delivery time',
-        'Cost optimization and route efficiency analysis',
-        'Predictive analytics for demand forecasting',
-        'Comprehensive reporting dashboards',
-        'Continuous system improvement based on data insights'
+        "Customer and operator rating system",
+        "Performance analytics: success rate, delivery time",
+        "Cost optimization and route efficiency analysis",
+        "Predictive analytics for demand forecasting",
+        "Comprehensive reporting dashboards",
+        "Continuous system improvement based on data insights",
       ],
-      visual: 'Interactive analytics dashboard with charts and metrics'
-    }
+      visual: "Interactive analytics dashboard with charts and metrics",
+    },
   ];
 
   const comparisonFeatures = [
-    { feature: 'Target Audience', subscription: 'Fleet owners & logistics companies', payPerShipment: 'On-demand businesses & individuals' },
-    { feature: 'Vehicle Assignment', subscription: 'Automatic via VCODE system', payPerShipment: 'AI-based best match algorithm' },
-    { feature: 'Payment Model', subscription: 'Monthly/Annual subscription', payPerShipment: 'Per-shipment invoice based' },
-    { feature: 'Vehicle Ownership', subscription: 'Company-owned fleet', payPerShipment: 'Individual operator vehicles' },
-    { feature: 'Multi-vehicle Support', subscription: '✓ Unlimited fleet management', payPerShipment: '✓ Multiple vehicle registration' },
-    { feature: 'Bank Account Requirement', subscription: 'Optional for billing', payPerShipment: 'Required for payments' },
-    { feature: 'Route Optimization', subscription: '✓ Fleet-wide optimization', payPerShipment: '✓ Individual route planning' },
-    { feature: 'Analytics & Reporting', subscription: '✓ Comprehensive fleet analytics', payPerShipment: '✓ Individual performance metrics' }
+    {
+      feature: "Target Audience",
+      subscription: "Fleet owners & logistics companies",
+      payPerShipment: "On-demand businesses & individuals",
+    },
+    {
+      feature: "Vehicle Assignment",
+      subscription: "Automatic via VCODE system",
+      payPerShipment: "AI-based best match algorithm",
+    },
+    {
+      feature: "Payment Model",
+      subscription: "Monthly/Annual subscription",
+      payPerShipment: "Per-shipment invoice based",
+    },
+    {
+      feature: "Vehicle Ownership",
+      subscription: "Company-owned fleet",
+      payPerShipment: "Individual operator vehicles",
+    },
+    {
+      feature: "Multi-vehicle Support",
+      subscription: "✓ Unlimited fleet management",
+      payPerShipment: "✓ Multiple vehicle registration",
+    },
+    {
+      feature: "Bank Account Requirement",
+      subscription: "Optional for billing",
+      payPerShipment: "Required for payments",
+    },
+    {
+      feature: "Route Optimization",
+      subscription: "✓ Fleet-wide optimization",
+      payPerShipment: "✓ Individual route planning",
+    },
+    {
+      feature: "Analytics & Reporting",
+      subscription: "✓ Comprehensive fleet analytics",
+      payPerShipment: "✓ Individual performance metrics",
+    },
   ];
 
   const roles = [
     {
-      id: 'logistics' as const,
-      title: 'Logistics Company',
-      description: 'Manage shipments, track deliveries, and coordinate operations',
+      id: "logistics" as const,
+      title: "Logistics Company",
+      description:
+        "Manage shipments, track deliveries, and coordinate operations",
       icon: Building2,
-      color: 'bg-blue-600',
-      hoverColor: 'hover:bg-blue-700',
+      color: "bg-blue-600",
+      hoverColor: "hover:bg-blue-700",
       features: [
-        'Create & manage shipments',
-        'Track fleet in real-time',
-        'Performance analytics',
-        'Operator management'
-      ]
+        "Create & manage shipments",
+        "Track fleet in real-time",
+        "Performance analytics",
+        "Operator management",
+      ],
     },
     {
-      id: 'operator' as const,
-      title: 'Operator/Driver',
-      description: 'Accept jobs, update delivery status, and manage routes',
+      id: "operator" as const,
+      title: "Operator/Driver",
+      description: "Accept jobs, update delivery status, and manage routes",
       icon: Truck,
-      color: 'bg-green-600',
-      hoverColor: 'hover:bg-green-700',
+      color: "bg-green-600",
+      hoverColor: "hover:bg-green-700",
       features: [
-        'View available jobs',
-        'Accept/reject shipments',
-        'Real-time GPS tracking',
-        'Earnings dashboard'
-      ]
+        "View available jobs",
+        "Accept/reject shipments",
+        "Real-time GPS tracking",
+        "Earnings dashboard",
+      ],
     },
     {
-      id: 'customer' as const,
-      title: 'Customer',
-      description: 'Track your shipments and manage delivery preferences',
+      id: "customer" as const,
+      title: "Customer",
+      description: "Track your shipments and manage delivery preferences",
       icon: User,
-      color: 'bg-purple-600',
-      hoverColor: 'hover:bg-purple-700',
+      color: "bg-purple-600",
+      hoverColor: "hover:bg-purple-700",
       features: [
-        'Track shipments live',
-        'Delivery notifications',
-        'Order history',
-        'Rate & feedback'
-      ]
-    }
+        "Track shipments live",
+        "Delivery notifications",
+        "Order history",
+        "Rate & feedback",
+      ],
+    },
   ];
 
   return (
@@ -262,41 +303,60 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
       <section className="relative overflow-hidden py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className={`transform transition-all duration-1000 ${isVisible ? 'translate-x-0 opacity-100' : '-translate-x-10 opacity-0'}`}>
+            <div
+              className={`transform transition-all duration-1000 ${isVisible ? "translate-x-0 opacity-100" : "-translate-x-10 opacity-0"}`}
+            >
               <div className="flex items-center space-x-3 mb-6">
-                <img src="/LOGO.png" alt="TrackAS Logo" className="h-12 w-auto" />
+                <img
+                  src="/LOGO.png"
+                  alt="TrackAS Logo"
+                  className="h-12 w-auto"
+                />
                 <div>
                   <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
                     Welcome to TrackAS
                   </h1>
-                  <p className="text-xl text-gray-600 mb-2">AI-Powered Logistics Platform</p>
+                  <p className="text-xl text-gray-600 mb-2">
+                    AI-Powered Logistics Platform
+                  </p>
                 </div>
               </div>
-              
+
               <p className="text-lg text-gray-700 mb-8 leading-relaxed">
-                Transform your logistics operations with AI-powered shipment tracking, 
-                automated assignments, and real-time analytics. Choose your role to get started 
-                with the complete end-to-end logistics management solution.
+                Transform your logistics operations with AI-powered shipment
+                tracking, automated assignments, and real-time analytics. Choose
+                your role to get started with the complete end-to-end logistics
+                management solution.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-4">
-                <button 
-                  onClick={() => document.getElementById('role-selection')?.scrollIntoView({ behavior: 'smooth' })}
+                <button
+                  onClick={() =>
+                    document
+                      .getElementById("role-selection")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
                   className="bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold hover:bg-blue-700 transition-all transform hover:scale-105 flex items-center justify-center space-x-2"
                 >
                   <span>Get Started</span>
                   <ArrowRight className="h-5 w-5" />
                 </button>
-                <button 
-                  onClick={() => document.getElementById('operational-flow')?.scrollIntoView({ behavior: 'smooth' })}
+                <button
+                  onClick={() =>
+                    document
+                      .getElementById("operational-flow")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
                   className="border-2 border-blue-600 text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-blue-50 transition-all"
                 >
                   See How It Works
                 </button>
               </div>
             </div>
-            
-            <div className={`transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}>
+
+            <div
+              className={`transform transition-all duration-1000 delay-300 ${isVisible ? "translate-x-0 opacity-100" : "translate-x-10 opacity-0"}`}
+            >
               <div className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-8 text-white">
                 <div className="flex items-center space-x-3 mb-6">
                   <Globe className="h-8 w-8" />
@@ -330,28 +390,34 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Who Uses TrackAS?</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Who Uses TrackAS?
+            </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our platform serves diverse stakeholders in the logistics ecosystem, 
-              each with tailored interfaces and functionalities.
+              Our platform serves diverse stakeholders in the logistics
+              ecosystem, each with tailored interfaces and functionalities.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {userRoles.map((role, index) => {
               const Icon = role.icon;
               return (
-                <div 
+                <div
                   key={index}
                   className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2"
                 >
-                  <div className={`${role.color} rounded-2xl p-4 w-16 h-16 flex items-center justify-center mb-6`}>
+                  <div
+                    className={`${role.color} rounded-2xl p-4 w-16 h-16 flex items-center justify-center mb-6`}
+                  >
                     <Icon className="h-8 w-8 text-white" />
                   </div>
-                  
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{role.title}</h3>
+
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    {role.title}
+                  </h3>
                   <p className="text-gray-600 mb-6">{role.description}</p>
-                  
+
                   <div className="space-y-2">
                     {role.features.map((feature, idx) => (
                       <div key={idx} className="flex items-center space-x-2">
@@ -375,8 +441,9 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
               Complete Operational Flow
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Follow the journey from user login to successful shipment delivery, 
-              powered by cutting-edge technology and seamless user experience.
+              Follow the journey from user login to successful shipment
+              delivery, powered by cutting-edge technology and seamless user
+              experience.
             </p>
           </div>
 
@@ -388,8 +455,8 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
                 onClick={() => setActiveStep(step.id)}
                 className={`px-4 py-2 rounded-full font-medium transition-all ${
                   activeStep === step.id
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-white text-gray-600 hover:bg-gray-100'
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "bg-white text-gray-600 hover:bg-gray-100"
                 }`}
               >
                 Step {step.id}
@@ -404,7 +471,9 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
               <div
                 key={step.id}
                 className={`transition-all duration-500 ${
-                  activeStep === step.id ? 'opacity-100 block' : 'opacity-0 hidden'
+                  activeStep === step.id
+                    ? "opacity-100 block"
+                    : "opacity-0 hidden"
                 }`}
               >
                 <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
@@ -412,19 +481,25 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
                     {/* Content */}
                     <div className="p-12">
                       <div className="flex items-center space-x-4 mb-6">
-                        <div className={`${step.color} rounded-2xl p-4 flex items-center justify-center`}>
+                        <div
+                          className={`${step.color} rounded-2xl p-4 flex items-center justify-center`}
+                        >
                           <Icon className="h-8 w-8 text-white" />
                         </div>
                         <div>
                           <div className="text-sm font-medium text-gray-500 mb-1">
                             Step {step.id} of {operationalSteps.length}
                           </div>
-                          <h3 className="text-2xl font-bold text-gray-900">{step.title}</h3>
+                          <h3 className="text-2xl font-bold text-gray-900">
+                            {step.title}
+                          </h3>
                         </div>
                       </div>
-                      
-                      <p className="text-lg text-gray-600 mb-8">{step.description}</p>
-                      
+
+                      <p className="text-lg text-gray-600 mb-8">
+                        {step.description}
+                      </p>
+
                       <div className="space-y-4">
                         {step.details.map((detail, idx) => (
                           <div key={idx} className="flex items-start space-x-3">
@@ -434,14 +509,18 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
                         ))}
                       </div>
                     </div>
-                    
+
                     {/* Visual */}
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-12 flex items-center justify-center">
                       <div className="text-center">
-                        <div className={`${step.color} rounded-3xl p-8 mb-6 inline-block`}>
+                        <div
+                          className={`${step.color} rounded-3xl p-8 mb-6 inline-block`}
+                        >
                           <Icon className="h-16 w-16 text-white" />
                         </div>
-                        <h4 className="text-lg font-semibold text-gray-900 mb-2">Visual Demo</h4>
+                        <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                          Visual Demo
+                        </h4>
                         <p className="text-gray-600">{step.visual}</p>
                       </div>
                     </div>
@@ -461,20 +540,22 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
               <ArrowRight className="h-4 w-4 rotate-180" />
               <span>Previous Step</span>
             </button>
-            
+
             <div className="flex space-x-2">
               {operationalSteps.map((_, idx) => (
                 <div
                   key={idx}
                   className={`w-3 h-3 rounded-full transition-all ${
-                    activeStep === idx + 1 ? 'bg-blue-600' : 'bg-gray-300'
+                    activeStep === idx + 1 ? "bg-blue-600" : "bg-gray-300"
                   }`}
                 />
               ))}
             </div>
-            
+
             <button
-              onClick={() => setActiveStep(Math.min(operationalSteps.length, activeStep + 1))}
+              onClick={() =>
+                setActiveStep(Math.min(operationalSteps.length, activeStep + 1))
+              }
               disabled={activeStep === operationalSteps.length}
               className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
@@ -493,8 +574,9 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
               Dual Business Models
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              TrackAS supports both subscription-based and pay-per-shipment models 
-              to accommodate different business needs and operational structures.
+              TrackAS supports both subscription-based and pay-per-shipment
+              models to accommodate different business needs and operational
+              structures.
             </p>
           </div>
 
@@ -503,7 +585,9 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
               <table className="w-full">
                 <thead>
                   <tr className="bg-gradient-to-r from-blue-50 to-indigo-50">
-                    <th className="px-8 py-6 text-left text-lg font-semibold text-gray-900">Feature</th>
+                    <th className="px-8 py-6 text-left text-lg font-semibold text-gray-900">
+                      Feature
+                    </th>
                     <th className="px-8 py-6 text-center text-lg font-semibold text-blue-600">
                       <div className="flex items-center justify-center space-x-2">
                         <Building2 className="h-5 w-5" />
@@ -520,10 +604,19 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
                 </thead>
                 <tbody>
                   {comparisonFeatures.map((item, index) => (
-                    <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                      <td className="px-8 py-6 font-medium text-gray-900">{item.feature}</td>
-                      <td className="px-8 py-6 text-center text-gray-700">{item.subscription}</td>
-                      <td className="px-8 py-6 text-center text-gray-700">{item.payPerShipment}</td>
+                    <tr
+                      key={index}
+                      className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                    >
+                      <td className="px-8 py-6 font-medium text-gray-900">
+                        {item.feature}
+                      </td>
+                      <td className="px-8 py-6 text-center text-gray-700">
+                        {item.subscription}
+                      </td>
+                      <td className="px-8 py-6 text-center text-gray-700">
+                        {item.payPerShipment}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -537,20 +630,27 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
       <section id="role-selection" className="py-20 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Choose Your Role</h2>
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Choose Your Role
+            </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Select your role to access the comprehensive logistics platform designed for modern supply chain management
+              Select your role to access the comprehensive logistics platform
+              designed for modern supply chain management
             </p>
             <div className="mt-6 inline-flex items-center space-x-2 bg-white px-4 py-2 rounded-full shadow-sm">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">System Online - Founded by</span>
-                <img 
-                  src="/Vipul.png" 
-                  alt="Vipul Sharma" 
+                <span className="text-sm text-gray-600">
+                  System Online - Founded by
+                </span>
+                <img
+                  src="/Vipul.png"
+                  alt="Vipul Sharma"
                   className="h-5 w-5 rounded-full object-cover"
                 />
-                <span className="text-sm font-medium text-gray-900">Vipul Sharma - Founder</span>
+                <span className="text-sm font-medium text-gray-900">
+                  Vipul Sharma - Founder
+                </span>
               </div>
             </div>
           </div>
@@ -565,23 +665,32 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
                   className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl group"
                 >
                   <div className="text-center">
-                    <div className={`inline-flex items-center justify-center w-16 h-16 ${role.color} rounded-2xl mb-6 group-hover:scale-110 transition-transform`}>
+                    <div
+                      className={`inline-flex items-center justify-center w-16 h-16 ${role.color} rounded-2xl mb-6 group-hover:scale-110 transition-transform`}
+                    >
                       <Icon className="h-8 w-8 text-white" />
                     </div>
-                    
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">{role.title}</h3>
+
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                      {role.title}
+                    </h3>
                     <p className="text-gray-600 mb-6">{role.description}</p>
-                    
+
                     <div className="space-y-3 mb-8">
                       {role.features.map((feature, index) => (
-                        <div key={index} className="flex items-center text-sm text-gray-600">
+                        <div
+                          key={index}
+                          className="flex items-center text-sm text-gray-600"
+                        >
                           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-3"></div>
                           {feature}
                         </div>
                       ))}
                     </div>
-                    
-                    <button className={`w-full py-3 px-6 ${role.color} ${role.hoverColor} text-white rounded-xl font-medium transition-colors`}>
+
+                    <button
+                      className={`w-full py-3 px-6 ${role.color} ${role.hoverColor} text-white rounded-xl font-medium transition-colors`}
+                    >
                       Continue as {role.title}
                     </button>
                   </div>
@@ -599,13 +708,18 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
             Start Streamlining Your Logistics Today
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of businesses already using TrackAS to optimize their 
-            supply chain operations and deliver exceptional customer experiences.
+            Join thousands of businesses already using TrackAS to optimize their
+            supply chain operations and deliver exceptional customer
+            experiences.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              onClick={() => document.getElementById('role-selection')?.scrollIntoView({ behavior: 'smooth' })}
+            <button
+              onClick={() =>
+                document
+                  .getElementById("role-selection")
+                  ?.scrollIntoView({ behavior: "smooth" })
+              }
               className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-all transform hover:scale-105"
             >
               Get Started Now
@@ -614,15 +728,17 @@ const RoleSelector: React.FC<RoleSelectorProps> = ({ onRoleSelect }) => {
               Book a Demo
             </button>
           </div>
-          
+
           <div className="mt-12 flex items-center justify-center space-x-2 text-blue-100">
             <span>Founded with ❤️ by</span>
-            <img 
-              src="/Vipul.png" 
-              alt="Vipul Sharma" 
+            <img
+              src="/Vipul.png"
+              alt="Vipul Sharma"
               className="h-8 w-8 rounded-full object-cover border-2 border-blue-300"
             />
-            <span className="font-medium text-white">Vipul Sharma - Founder</span>
+            <span className="font-medium text-white">
+              Vipul Sharma - Founder
+            </span>
           </div>
         </div>
       </section>

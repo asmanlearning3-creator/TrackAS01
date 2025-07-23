@@ -1,32 +1,85 @@
-import React from 'react';
-import { Plus, Search, BarChart3, Users, MapPin, Bell } from 'lucide-react';
+import React from "react";
+import { Plus, Search, BarChart3, Users, MapPin, Bell } from "lucide-react";
 
 interface QuickActionsProps {
-  userRole: 'logistics' | 'operator' | 'customer';
+  userRole: "logistics" | "operator" | "customer";
   onActionClick: (action: string) => void;
 }
 
-const QuickActions: React.FC<QuickActionsProps> = ({ userRole, onActionClick }) => {
+const QuickActions: React.FC<QuickActionsProps> = ({
+  userRole,
+  onActionClick,
+}) => {
   const getActions = () => {
     switch (userRole) {
-      case 'logistics':
+      case "logistics":
         return [
-          { id: 'create-shipment', label: 'Create Shipment', icon: Plus, color: 'bg-blue-600 hover:bg-blue-700' },
-          { id: 'operators', label: 'Manage Fleet', icon: Users, color: 'bg-green-600 hover:bg-green-700' },
-          { id: 'analytics', label: 'View Analytics', icon: BarChart3, color: 'bg-purple-600 hover:bg-purple-700' },
-          { id: 'tracking', label: 'Live Tracking', icon: MapPin, color: 'bg-orange-600 hover:bg-orange-700' },
+          {
+            id: "create-shipment",
+            label: "Create Shipment",
+            icon: Plus,
+            color: "bg-blue-600 hover:bg-blue-700",
+          },
+          {
+            id: "operators",
+            label: "Manage Fleet",
+            icon: Users,
+            color: "bg-green-600 hover:bg-green-700",
+          },
+          {
+            id: "analytics",
+            label: "View Analytics",
+            icon: BarChart3,
+            color: "bg-purple-600 hover:bg-purple-700",
+          },
+          {
+            id: "tracking",
+            label: "Live Tracking",
+            icon: MapPin,
+            color: "bg-orange-600 hover:bg-orange-700",
+          },
         ];
-      case 'operator':
+      case "operator":
         return [
-          { id: 'available-jobs', label: 'View Jobs', icon: Search, color: 'bg-blue-600 hover:bg-blue-700' },
-          { id: 'tracking', label: 'Update Location', icon: MapPin, color: 'bg-green-600 hover:bg-green-700' },
-          { id: 'earnings', label: 'View Earnings', icon: BarChart3, color: 'bg-purple-600 hover:bg-purple-700' },
+          {
+            id: "available-jobs",
+            label: "View Jobs",
+            icon: Search,
+            color: "bg-blue-600 hover:bg-blue-700",
+          },
+          {
+            id: "tracking",
+            label: "Update Location",
+            icon: MapPin,
+            color: "bg-green-600 hover:bg-green-700",
+          },
+          {
+            id: "earnings",
+            label: "View Earnings",
+            icon: BarChart3,
+            color: "bg-purple-600 hover:bg-purple-700",
+          },
         ];
-      case 'customer':
+      case "customer":
         return [
-          { id: 'tracking', label: 'Track Shipment', icon: Search, color: 'bg-blue-600 hover:bg-blue-700' },
-          { id: 'my-shipments', label: 'My Shipments', icon: MapPin, color: 'bg-green-600 hover:bg-green-700' },
-          { id: 'history', label: 'Order History', icon: BarChart3, color: 'bg-purple-600 hover:bg-purple-700' },
+          {
+            id: "tracking",
+            label: "Track Shipment",
+            icon: Search,
+            color: "bg-blue-600 hover:bg-blue-700",
+          },
+          {
+            id: "my-shipments",
+            label: "My Shipments",
+            icon: MapPin,
+            color: "bg-green-600 hover:bg-green-700",
+          },
+          {
+            id: "history",
+            label: "Order History",
+            icon: BarChart3,
+            color: "bg-purple-600 hover:bg-purple-700",
+          },
         ];
       default:
         return [];

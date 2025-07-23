@@ -1,0 +1,122 @@
+name: Notification Automation
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline", "Terraform", "Deploy"]
+    types:
+      - completed
+
+jobs:
+  slack-notification:
+    name: Send Slack Notification
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'cancelled'
+    steps:
+      - name: Check if Slack webhook is configured
+        id: slack-check
+        run: |
+          if [ -z "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            echo "slack_configured=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Slack webhook URL not configured. Skipping notification."
+          else
+            echo "slack_configured=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Prepare notification message
+        id: message
+        run: |
+          WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+          CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+          BRANCH="${{ github.event.workflow_run.head_branch }}"
+          REPO="${{ github.repository }}"
+          RUN_URL="${{ github.event.workflow_run.html_url }}"
+
+          case $CONCLUSION in
+            "success")
+              EMOJI="✅"
+              COLOR="good"
+              ;;
+            "failure")
+              EMOJI="❌"
+              COLOR="danger"
+              ;;
+            "cancelled")
+              EMOJI="🚫"
+              COLOR="warning"
+              ;;
+            *)
+              EMOJI="⚠️"
+              COLOR="warning"
+              ;;
+          esac
+
+          MESSAGE="$EMOJI *$WORKFLOW_NAME* workflow $CONCLUSION on branch \`$BRANCH\`"
+
+          echo "message=$MESSAGE" >> $GITHUB_OUTPUT
+          echo "color=$COLOR" >> $GITHUB_OUTPUT
+          echo "run_url=$RUN_URL" >> $GITHUB_OUTPUT
+
+      - name: Send Slack notification
+        if: steps.slack-check.outputs.slack_configured == 'true'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "attachments": [
+                {
+                  "color": "${{ steps.message.outputs.color }}",
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "${{ steps.message.outputs.message }}"
+                      }
+                    },
+                    {
+                      "type": "section",
+                      "fields": [
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Repository:*\n${{ github.repository }}"
+                        },
+                        {
+                          "type": "mrkdwn",
+                          "text": "*Branch:*\n${{ github.event.workflow_run.head_branch }}"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "actions",
+                      "elements": [
+                        {
+                          "type": "button",
+                          "text": {
+                            "type": "plain_text",
+                            "text": "View Workflow Run"
+                          },
+                          "url": "${{ steps.message.outputs.run_url }}"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Log notification sent
+        if: steps.slack-check.outputs.slack_configured == 'true'
+        run: |
+          echo "✅ Slack notification sent for workflow: ${{ github.event.workflow_run.name }}"
+          echo "Status: ${{ github.event.workflow_run.conclusion }}"
+
+      - name: Log notification skipped
+        if: steps.slack-check.outputs.slack_configured == 'false'
+        run: |
+          echo "⏭️ Slack notification skipped - webhook URL not configured"
+          echo "To enable Slack notifications:"
+          echo "1. Create a Slack webhook URL"
+          echo "2. Add it as SLACK_WEBHOOK_URL secret in repository settings"
