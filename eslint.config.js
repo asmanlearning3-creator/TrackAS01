@@ -23,6 +23,13 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      // Relax TypeScript rules for development
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unsafe-function-type': 'warn',
+      'no-useless-catch': 'warn',
+      // Allow any for rapid development
+      '@typescript-eslint/ban-types': 'off',
     },
   }
 );

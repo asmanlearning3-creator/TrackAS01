@@ -25,7 +25,12 @@ echo "✅ Node.js $(node -v) found"
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-npm ci
+if command -v npm &> /dev/null; then
+    npm ci
+else
+    echo "❌ npm not found. Please install Node.js first."
+    exit 1
+fi
 
 # Check if Supabase CLI is installed
 if ! command -v supabase &> /dev/null; then
