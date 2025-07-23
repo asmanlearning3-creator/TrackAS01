@@ -7,7 +7,15 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
+    "preview": "vite preview",
+    "test": "echo \"No tests specified yet\" && exit 0",
+    "clean": "rm -rf dist node_modules/.vite",
+    "security-audit": "npm audit",
+    "security-fix": "npm audit fix",
+    "outdated": "npm outdated",
+    "ci": "npm ci && npm run type-check && npm run lint && npm run build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.51.0",
@@ -25,6 +33,7 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.11",
     "globals": "^15.9.0",
+    "husky": "^9.0.11",
     "postcss": "^8.4.35",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.5.3",
