@@ -1,0 +1,444 @@
+name: TrackAS Notification & Communication Automation
+
+on:
+  schedule:
+    # Run every 2 minutes for real-time updates
+    - cron: '*/2 * * * *'
+  workflow_dispatch:
+    inputs:
+      notification_type:
+        description: 'Type of notification to process'
+        required: true
+        type: choice
+        options:
+          - 'shipment_confirmations'
+          - 'pickup_notifications'
+          - 'delivery_updates'
+          - 'payment_notifications'
+          - 'expired_requests'
+          - 'all'
+
+env:
+  SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+  TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+  SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+
+jobs:
+  # Process shipment confirmation notifications
+  shipment_confirmations:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.notification_type == 'shipment_confirmations' || github.event.inputs.notification_type == 'all' || github.event_name == 'schedule'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Process Shipment Confirmations
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function processShipmentConfirmations() {
+          // Find newly assigned shipments that need confirmation notifications
+          const { data: shipments } = await supabase
+            .from('shipments')
+            .select('*, operators(*), customers(*), companies(*)')
+            .eq('status', 'assigned')
+            .eq('confirmation_sent', false);
+            
+          for (const shipment of shipments || []) {
+            await sendConfirmationNotifications(shipment);
+            
+            // Mark as confirmation sent
+            await supabase
+              .from('shipments')
+              .update({ 
+                confirmation_sent: true,
+                confirmation_sent_at: new Date().toISOString()
+              })
+              .eq('id', shipment.id);
+              
+            console.log(\`Confirmation sent for shipment \${shipment.id}\`);
+          }
+        }
+        
+        async function sendConfirmationNotifications(shipment) {
+          const trackingLink = \`https://trackas.app/track/\${shipment.tracking_number}\`;
+          
+          // Notification to logistics company
+          const logisticsMessage = {
+            to: shipment.companies.contact_email,
+            subject: \`Shipment \${shipment.tracking_number} Assigned\`,
+            html: \`
+              <h2>Shipment Confirmation</h2>
+              <p>Your shipment has been assigned to:</p>
+              <ul>
+                <li><strong>Operator:</strong> \${shipment.operators.name}</li>
+                <li><strong>Contact:</strong> \${shipment.operators.phone}</li>
+                <li><strong>Vehicle:</strong> \${shipment.operators.vehicle_details}</li>
+                <li><strong>Estimated Pickup:</strong> \${shipment.estimated_pickup_time}</li>
+              </ul>
+              <p><a href=\'\${trackingLink}\'>Track Shipment</a></p>
+            \`
+          };
+          
+          // Notification to customer
+          const customerMessage = {
+            to: shipment.customers.email,
+            subject: \`Your Shipment \${shipment.tracking_number} is On the Way!\`,
+            html: \`
+              <h2>Shipment Update</h2>
+              <p>Great news! Your shipment is now being processed.</p>
+              <ul>
+                <li><strong>Tracking Number:</strong> \${shipment.tracking_number}</li>
+                <li><strong>Driver:</strong> \${shipment.operators.name}</li>
+                <li><strong>Contact:</strong> \${shipment.operators.phone}</li>
+                <li><strong>Estimated Pickup:</strong> \${shipment.estimated_pickup_time}</li>
+              </ul>
+              <p><a href=\'\${trackingLink}\'>Track Your Shipment Live</a></p>
+            \`
+          };
+          
+          // WhatsApp notification to customer (if phone available)
+          if (shipment.customers.phone) {
+            const whatsappMessage = \`🚚 TrackAS Update: Your shipment \${shipment.tracking_number} has been assigned! Driver: \${shipment.operators.name} (\${shipment.operators.phone}). Track: \${trackingLink}\`;
+            console.log(\`WhatsApp to \${shipment.customers.phone}: \${whatsappMessage}\`);
+          }
+          
+          console.log('Notifications sent:', { logistics: logisticsMessage.to, customer: customerMessage.to });
+        }
+        
+        processShipmentConfirmations().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+  # Process pickup notifications
+  pickup_notifications:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.notification_type == 'pickup_notifications' || github.event.inputs.notification_type == 'all' || github.event_name == 'schedule'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Process Pickup Notifications
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function processPickupNotifications() {
+          // Find shipments that were just picked up
+          const { data: shipments } = await supabase
+            .from('shipments')
+            .select('*, operators(*), customers(*), companies(*)')
+            .eq('status', 'picked_up')
+            .eq('pickup_notification_sent', false);
+            
+          for (const shipment of shipments || []) {
+            await sendPickupNotifications(shipment);
+            
+            await supabase
+              .from('shipments')
+              .update({ 
+                pickup_notification_sent: true,
+                pickup_notification_sent_at: new Date().toISOString()
+              })
+              .eq('id', shipment.id);
+              
+            console.log(\`Pickup notification sent for shipment \${shipment.id}\`);
+          }
+        }
+        
+        async function sendPickupNotifications(shipment) {
+          const trackingLink = \`https://trackas.app/track/\${shipment.tracking_number}\`;
+          
+          // Notification to logistics company
+          const logisticsNotification = {
+            to: shipment.companies.contact_email,
+            subject: \`Shipment \${shipment.tracking_number} Picked Up\`,
+            html: \`
+              <h2>Pickup Confirmed</h2>
+              <p>Shipment \${shipment.tracking_number} has been successfully picked up.</p>
+              <ul>
+                <li><strong>Pickup Time:</strong> \${shipment.actual_pickup_time}</li>
+                <li><strong>Operator:</strong> \${shipment.operators.name}</li>
+                <li><strong>Location:</strong> \${shipment.pickup_address}</li>
+              </ul>
+              <p><a href=\'\${trackingLink}\'>Track Shipment</a></p>
+            \`
+          };
+          
+          // Notification to customer
+          const customerNotification = {
+            to: shipment.customers.email,
+            subject: \`Your Package is On Its Way! - \${shipment.tracking_number}\`,
+            html: \`
+              <h2>Package Picked Up!</h2>
+              <p>Your shipment has been picked up and is now in transit.</p>
+              <ul>
+                <li><strong>Pickup Time:</strong> \${shipment.actual_pickup_time}</li>
+                <li><strong>Estimated Delivery:</strong> \${shipment.estimated_delivery_time}</li>
+                <li><strong>Driver:</strong> \${shipment.operators.name}</li>
+              </ul>
+              <p><a href=\'\${trackingLink}\'>Track Live Location</a></p>
+            \`
+          };
+          
+          console.log('Pickup notifications sent');
+        }
+        
+        processPickupNotifications().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+  # Process delivery notifications
+  delivery_notifications:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.notification_type == 'delivery_updates' || github.event.inputs.notification_type == 'all' || github.event_name == 'schedule'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Process Delivery Notifications
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function processDeliveryNotifications() {
+          // Find shipments that were just delivered
+          const { data: shipments } = await supabase
+            .from('shipments')
+            .select('*, operators(*), customers(*), companies(*)')
+            .eq('status', 'delivered')
+            .eq('delivery_notification_sent', false);
+            
+          for (const shipment of shipments || []) {
+            await sendDeliveryNotifications(shipment);
+            
+            await supabase
+              .from('shipments')
+              .update({ 
+                delivery_notification_sent: true,
+                delivery_notification_sent_at: new Date().toISOString()
+              })
+              .eq('id', shipment.id);
+              
+            console.log(\`Delivery notification sent for shipment \${shipment.id}\`);
+          }
+        }
+        
+        async function sendDeliveryNotifications(shipment) {
+          // Notification to logistics company
+          const logisticsNotification = {
+            to: shipment.companies.contact_email,
+            subject: \`Shipment \${shipment.tracking_number} Delivered Successfully\`,
+            html: \`
+              <h2>Delivery Completed</h2>
+              <p>Shipment \${shipment.tracking_number} has been successfully delivered.</p>
+              <ul>
+                <li><strong>Delivery Time:</strong> \${shipment.actual_delivery_time}</li>
+                <li><strong>Received By:</strong> \${shipment.received_by}</li>
+                <li><strong>Operator:</strong> \${shipment.operators.name}</li>
+                <li><strong>Proof of Delivery:</strong> Available in dashboard</li>
+              </ul>
+            \`
+          };
+          
+          // Notification to customer
+          const customerNotification = {
+            to: shipment.customers.email,
+            subject: \`Package Delivered! - \${shipment.tracking_number}\`,
+            html: \`
+              <h2>Delivery Complete!</h2>
+              <p>Your package has been successfully delivered.</p>
+              <ul>
+                <li><strong>Delivery Time:</strong> \${shipment.actual_delivery_time}</li>
+                <li><strong>Received By:</strong> \${shipment.received_by}</li>
+              </ul>
+              <p>Thank you for using TrackAS!</p>
+              <p><a href='https://trackas.app/feedback/\${shipment.id}'>Rate Your Experience</a></p>
+            \`
+          };
+          
+          console.log('Delivery notifications sent');
+        }
+        
+        processDeliveryNotifications().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+  # Clean up expired shipment requests
+  cleanup_expired_requests:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.notification_type == 'expired_requests' || github.event.inputs.notification_type == 'all' || github.event_name == 'schedule'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Clean Expired Requests
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function cleanExpiredRequests() {
+          // Find expired shipment requests (15 minutes timeout)
+          const { data: expiredRequests } = await supabase
+            .from('shipment_requests')
+            .select('*, shipments(*)')
+            .eq('status', 'pending')
+            .lt('expires_at', new Date().toISOString());
+            
+          for (const request of expiredRequests || []) {
+            // Mark request as expired
+            await supabase
+              .from('shipment_requests')
+              .update({ status: 'expired' })
+              .eq('id', request.id);
+              
+            console.log(\`Expired request \${request.id} for shipment \${request.shipment_id}\`);
+          }
+          
+          // Check if shipments need to be reassigned
+          const shipmentIds = [...new Set(expiredRequests?.map(r => r.shipment_id) || [])];
+          
+          for (const shipmentId of shipmentIds) {
+            const { data: activeRequests } = await supabase
+              .from('shipment_requests')
+              .select('*')
+              .eq('shipment_id', shipmentId)
+              .eq('status', 'pending');
+              
+            // If no active requests remain, reassign shipment
+            if (!activeRequests || activeRequests.length === 0) {
+              await supabase
+                .from('shipments')
+                .update({ status: 'pending' })
+                .eq('id', shipmentId);
+                
+              console.log(\`Shipment \${shipmentId} marked for reassignment\`);
+            }
+          }
+        }
+        
+        cleanExpiredRequests().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+  # Process payment notifications
+  payment_notifications:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.notification_type == 'payment_notifications' || github.event.inputs.notification_type == 'all'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Process Payment Notifications
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function processPaymentNotifications() {
+          // Find approved payments that need notification
+          const { data: payments } = await supabase
+            .from('payments')
+            .select('*, operators(*), shipments(*)')
+            .eq('status', 'approved')
+            .eq('notification_sent', false);
+            
+          for (const payment of payments || []) {
+            await sendPaymentNotification(payment);
+            
+            await supabase
+              .from('payments')
+              .update({ 
+                notification_sent: true,
+                notification_sent_at: new Date().toISOString()
+              })
+              .eq('id', payment.id);
+              
+            console.log(\`Payment notification sent for \${payment.id}\`);
+          }
+        }
+        
+        async function sendPaymentNotification(payment) {
+          const notification = {
+            to: payment.operators.email,
+            subject: \`Payment Processed - \$\${payment.amount}\`,
+            html: \`
+              <h2>Payment Received</h2>
+              <p>Your payment for shipment \${payment.shipments.tracking_number} has been processed.</p>
+              <ul>
+                <li><strong>Amount:</strong> \$\${payment.amount}</li>
+                <li><strong>Shipment:</strong> \${payment.shipments.tracking_number}</li>
+                <li><strong>Payment Date:</strong> \${payment.processed_at}</li>
+              </ul>
+              <p>Thank you for your service!</p>
+            \`
+          };
+          
+          console.log('Payment notification sent to:', payment.operators.email);
+        }
+        
+        processPaymentNotifications().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}

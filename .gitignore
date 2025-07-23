@@ -12,14 +12,58 @@ dist
 dist-ssr
 *.local
 
+# Environment files
+.env.local
+.env.production
+.env.staging
+.env.development.local
+.env.production.local
+
+# Database backups
+backups/
+*.sql
+*.sql.gz
+
+# Docker volumes
+postgres_data/
+redis_data/
+prometheus_data/
+grafana_data/
+
+# SSL certificates
+ssl/
+*.pem
+*.key
+*.crt
+
+# Temporary files
+temp/
+tmp/
+.tmp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Husky
+.husky/_
 .env

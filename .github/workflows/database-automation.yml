@@ -1,0 +1,437 @@
+name: TrackAS Database Automation
+
+on:
+  schedule:
+    # Run every hour for verification processing
+    - cron: '0 * * * *'
+    # Run every 5 minutes for shipment assignments
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: 'Automation operation to run'
+        required: true
+        type: choice
+        options:
+          - 'process_verifications'
+          - 'generate_vcodes'
+          - 'assign_shipments'
+          - 'update_operator_ratings'
+          - 'process_payments'
+          - 'all'
+
+env:
+  SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+jobs:
+  # Process pending company and vehicle registrations
+  process_verifications:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.operation == 'process_verifications' || github.event.inputs.operation == 'all' || github.event_name == 'schedule'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Setup Supabase CLI
+      uses: supabase/setup-cli@v1
+
+    - name: Process Company Verifications
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function processVerifications() {
+          // Process pending company registrations (24-48 hour auto-approval)
+          const { data: pendingCompanies } = await supabase
+            .from('companies')
+            .select('*')
+            .eq('verification_status', 'pending')
+            .lt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+            
+          for (const company of pendingCompanies || []) {
+            const verificationResult = await verifyCompany(company);
+            if (verificationResult.approved) {
+              await supabase
+                .from('companies')
+                .update({ 
+                  verification_status: 'approved',
+                  approved_at: new Date().toISOString(),
+                  subscription_active: company.model_type === 'subscription'
+                })
+                .eq('id', company.id);
+              
+              // Send approval notification
+              console.log(\`Company \${company.name} approved\`);
+            }
+          }
+          
+          // Process vehicle registrations
+          const { data: pendingVehicles } = await supabase
+            .from('vehicles')
+            .select('*, companies(*)')
+            .eq('verification_status', 'pending')
+            .lt('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+            
+          for (const vehicle of pendingVehicles || []) {
+            const verificationResult = await verifyVehicle(vehicle);
+            if (verificationResult.approved) {
+              await supabase
+                .from('vehicles')
+                .update({ 
+                  verification_status: 'approved',
+                  approved_at: new Date().toISOString()
+                })
+                .eq('id', vehicle.id);
+                
+              console.log(\`Vehicle \${vehicle.registration_number} approved\`);
+            }
+          }
+        }
+        
+        async function verifyCompany(company) {
+          // Simulate TIN/Business registration verification
+          // In production, this would integrate with government APIs
+          return { approved: true, reason: 'Auto-approved after 24 hours' };
+        }
+        
+        async function verifyVehicle(vehicle) {
+          // Simulate vehicle registration and insurance verification
+          return { approved: true, reason: 'Documentation verified' };
+        }
+        
+        processVerifications().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+  # Generate VCODEs for approved subscription model vehicles
+  generate_vcodes:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.operation == 'generate_vcodes' || github.event.inputs.operation == 'all' || github.event_name == 'schedule'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate VCODEs
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function generateVCodes() {
+          // Find approved vehicles without VCODEs for subscription model companies
+          const { data: vehicles } = await supabase
+            .from('vehicles')
+            .select('*, companies(*)')
+            .eq('verification_status', 'approved')
+            .is('vcode', null)
+            .eq('companies.model_type', 'subscription');
+            
+          for (const vehicle of vehicles || []) {
+            const vcode = generateUniqueVCode(vehicle);
+            
+            await supabase
+              .from('vehicles')
+              .update({ 
+                vcode: vcode,
+                status: 'active',
+                vcode_generated_at: new Date().toISOString()
+              })
+              .eq('id', vehicle.id);
+              
+            console.log(\`Generated VCODE \${vcode} for vehicle \${vehicle.registration_number}\`);
+          }
+        }
+        
+        function generateUniqueVCode(vehicle) {
+          const prefix = vehicle.companies.name.substring(0, 3).toUpperCase();
+          const vehicleType = vehicle.vehicle_type.substring(0, 1).toUpperCase();
+          const timestamp = Date.now().toString().slice(-6);
+          return \`\${prefix}\${vehicleType}\${timestamp}\`;
+        }
+        
+        generateVCodes().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+  # Automated shipment assignment
+  assign_shipments:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.operation == 'assign_shipments' || github.event.inputs.operation == 'all' || github.event_name == 'schedule'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Process Shipment Assignments
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function assignShipments() {
+          // Find pending shipments
+          const { data: shipments } = await supabase
+            .from('shipments')
+            .select('*, companies(*)')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: true });
+            
+          for (const shipment of shipments || []) {
+            if (shipment.companies.model_type === 'subscription') {
+              await assignSubscriptionShipment(shipment);
+            } else {
+              await assignPayPerShipment(shipment);
+            }
+          }
+        }
+        
+        async function assignSubscriptionShipment(shipment) {
+          // Find available vehicles for subscription model
+          const { data: vehicles } = await supabase
+            .from('vehicles')
+            .select('*, operators(*)')
+            .eq('company_id', shipment.company_id)
+            .eq('status', 'active')
+            .not('vcode', 'is', null);
+            
+          const suitableVehicle = findBestVehicle(vehicles, shipment);
+          
+          if (suitableVehicle) {
+            await supabase
+              .from('shipments')
+              .update({
+                assigned_vehicle_id: suitableVehicle.id,
+                assigned_operator_id: suitableVehicle.operators.id,
+                status: 'assigned',
+                assigned_at: new Date().toISOString()
+              })
+              .eq('id', shipment.id);
+              
+            console.log(\`Assigned shipment \${shipment.id} to vehicle \${suitableVehicle.vcode}\`);
+          }
+        }
+        
+        async function assignPayPerShipment(shipment) {
+          // Find available operators for pay-per-shipment model
+          const { data: operators } = await supabase
+            .from('operators')
+            .select('*, vehicles(*)')
+            .eq('status', 'active')
+            .eq('verification_status', 'approved');
+            
+          const suitableOperators = findBestOperators(operators, shipment);
+          
+          // Create shipment requests for top 3 operators
+          for (let i = 0; i < Math.min(3, suitableOperators.length); i++) {
+            const operator = suitableOperators[i];
+            await supabase
+              .from('shipment_requests')
+              .insert({
+                shipment_id: shipment.id,
+                operator_id: operator.id,
+                vehicle_id: operator.vehicles[0].id,
+                status: 'pending',
+                expires_at: new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 minutes
+              });
+          }
+          
+          await supabase
+            .from('shipments')
+            .update({ status: 'matching' })
+            .eq('id', shipment.id);
+            
+          console.log(\`Created requests for shipment \${shipment.id}\`);
+        }
+        
+        function findBestVehicle(vehicles, shipment) {
+          // Simple proximity-based selection (in production, use real distance calculation)
+          return vehicles.find(v => 
+            v.capacity_weight >= shipment.weight && 
+            v.capacity_volume >= shipment.volume
+          );
+        }
+        
+        function findBestOperators(operators, shipment) {
+          // Sort by rating and proximity
+          return operators
+            .filter(op => op.vehicles.some(v => 
+              v.capacity_weight >= shipment.weight && 
+              v.capacity_volume >= shipment.volume
+            ))
+            .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+            .slice(0, 3);
+        }
+        
+        assignShipments().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+  # Update operator ratings and performance metrics
+  update_ratings:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.operation == 'update_operator_ratings' || github.event.inputs.operation == 'all'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Update Operator Ratings
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function updateRatings() {
+          const { data: operators } = await supabase
+            .from('operators')
+            .select('id');
+            
+          for (const operator of operators || []) {
+            const { data: feedbacks } = await supabase
+              .from('shipment_feedback')
+              .select('customer_rating, logistics_rating')
+              .eq('operator_id', operator.id);
+              
+            if (feedbacks && feedbacks.length > 0) {
+              const avgCustomerRating = feedbacks.reduce((sum, f) => sum + (f.customer_rating || 0), 0) / feedbacks.length;
+              const avgLogisticsRating = feedbacks.reduce((sum, f) => sum + (f.logistics_rating || 0), 0) / feedbacks.length;
+              const overallRating = (avgCustomerRating + avgLogisticsRating) / 2;
+              
+              await supabase
+                .from('operators')
+                .update({ 
+                  rating: overallRating,
+                  total_ratings: feedbacks.length 
+                })
+                .eq('id', operator.id);
+            }
+          }
+        }
+        
+        updateRatings().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+  # Process payments for pay-per-shipment model
+  process_payments:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.operation == 'process_payments' || github.event.inputs.operation == 'all'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Process Operator Payments
+      run: |
+        node -e "
+        const { createClient } = require('@supabase/supabase-js');
+        const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+        
+        async function processPayments() {
+          // Find completed shipments pending payment
+          const { data: shipments } = await supabase
+            .from('shipments')
+            .select('*, operators(*), companies(*)')
+            .eq('status', 'delivered')
+            .eq('payment_status', 'pending')
+            .eq('companies.model_type', 'pay_per_shipment');
+            
+          for (const shipment of shipments || []) {
+            const payment = calculatePayment(shipment);
+            
+            // Create payment record
+            await supabase
+              .from('payments')
+              .insert({
+                shipment_id: shipment.id,
+                operator_id: shipment.assigned_operator_id,
+                amount: payment.amount,
+                currency: 'USD',
+                status: 'pending',
+                calculation_details: payment.details
+              });
+              
+            await supabase
+              .from('shipments')
+              .update({ payment_status: 'calculated' })
+              .eq('id', shipment.id);
+              
+            console.log(\`Payment of \$\${payment.amount} calculated for shipment \${shipment.id}\`);
+          }
+        }
+        
+        function calculatePayment(shipment) {
+          const baseRate = 2.5; // per mile
+          const weightMultiplier = shipment.weight * 0.1;
+          const urgencyMultiplier = shipment.priority === 'urgent' ? 1.5 : 1.0;
+          
+          const amount = (shipment.distance || 10) * baseRate * weightMultiplier * urgencyMultiplier;
+          
+          return {
+            amount: Math.round(amount * 100) / 100,
+            details: {
+              base_rate: baseRate,
+              distance: shipment.distance || 10,
+              weight_multiplier: weightMultiplier,
+              urgency_multiplier: urgencyMultiplier
+            }
+          };
+        }
+        
+        processPayments().catch(console.error);
+        "
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
