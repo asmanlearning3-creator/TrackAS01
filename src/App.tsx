@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { AppProvider } from './context/AppContext';
 import { DatabaseProvider } from './context/DatabaseContext';
 import Header from './components/Header';
@@ -13,16 +14,14 @@ import CompanyRegistration from './components/CompanyRegistration';
 import VehicleRegistration from './components/VehicleRegistration';
 import VerificationDashboard from './components/VerificationDashboard';
 import OperationalFlow from './components/OperationalFlow';
+import Login from './components/auth/Login';
+import LoadingSpinner from './components/LoadingSpinner';
 
-function App() {
-  const [userRole, setUserRole] = useState<'logistics' | 'operator' | 'customer' | null>(null);
+const AppContent: React.FC = () => {
+  const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const handleRoleSelect = (role: 'logistics' | 'operator' | 'customer') => {
-    setUserRole(role);
-    setActiveTab('dashboard');
-  };
+  const [showDemo, setShowDemo] = useState(false);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -32,7 +31,7 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard userRole={userRole!} onTabChange={handleTabChange} />;
+        return <Dashboard userRole={user!.role!} onTabChange={handleTabChange} />;
       case 'create-shipment':
         return <CreateShipment />;
       case 'operators':
@@ -53,21 +52,48 @@ function App() {
       case 'operational-flow':
         return <OperationalFlow />;
       default:
-        return <Dashboard userRole={userRole!} onTabChange={handleTabChange} />;
+        return <Dashboard userRole={user!.role!} onTabChange={handleTabChange} />;
     }
   };
 
-  if (!userRole) {
-    return <RoleSelector onRoleSelect={handleRoleSelect} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Show demo mode option if user is not authenticated
+  if (!user) {
+    if (showDemo) {
+      return <RoleSelector onRoleSelect={() => {}} />;
+    }
+
+    return (
+      <div className="min-h-screen">
+        <Login onBack={() => setShowDemo(false)} />
+        
+        {/* Demo Mode Option */}
+        <div className="fixed bottom-4 right-4">
+          <button
+            onClick={() => setShowDemo(true)}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg transition-colors text-sm"
+          >
+            Try Demo Mode
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <DatabaseProvider userId="demo-user" userType="company">
+    <DatabaseProvider userId={user.id} userType={user.role === 'logistics' ? 'company' : 'user'}>
       <AppProvider>
         <div className="min-h-screen bg-gray-50">
           <Header 
             onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
-            userRole={userRole}
+            userRole={user.role!}
           />
           
           <div className="flex">
@@ -75,7 +101,7 @@ function App() {
               isOpen={sidebarOpen}
               activeTab={activeTab}
               onTabChange={handleTabChange}
-              userRole={userRole}
+              userRole={user.role!}
             />
             
             <main className="flex-1 lg:ml-64">
@@ -93,6 +119,14 @@ function App() {
         </div>
       </AppProvider>
     </DatabaseProvider>
+  );
+};
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
