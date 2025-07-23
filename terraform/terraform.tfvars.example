@@ -1,0 +1,20 @@
+# Terraform variables for TruckFlow infrastructure
+# Copy this file to terraform.tfvars and customize the values
+
+# AWS Configuration
+aws_region = "us-east-1"
+
+# Environment Configuration
+environment = "dev"  # Options: dev, staging, prod
+
+# Application Configuration
+app_name = "truckflow"
+
+# Example for different environments:
+# For staging:
+# environment = "staging"
+# aws_region = "us-west-2"
+
+# For production:
+# environment = "prod"
+# aws_region = "us-east-1"
