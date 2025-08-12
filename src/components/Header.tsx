@@ -5,12 +5,15 @@ import ConnectionStatus from './ConnectionStatus';
 
 interface HeaderProps {
   onMenuToggle: () => void;
-  userRole: 'logistics' | 'operator' | 'customer';
+  userRole: 'admin' | 'logistics' | 'operator' | 'customer';
 }
 
 const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
+  const { signOut } = useAuth();
+
   const getRoleDisplayName = () => {
     switch (userRole) {
+      case 'admin': return 'System Administrator';
       case 'logistics': return 'Logistics Company';
       case 'operator': return 'Operator';
       case 'customer': return 'Customer';
@@ -18,6 +21,15 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
     }
   };
 
+  const getRoleColor = () => {
+    switch (userRole) {
+      case 'admin': return 'border-red-200 bg-red-50';
+      case 'logistics': return 'border-blue-200 bg-blue-50';
+      case 'operator': return 'border-green-200 bg-green-50';
+      case 'customer': return 'border-purple-200 bg-purple-50';
+      default: return 'border-gray-200 bg-gray-50';
+    }
+  };
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
             
             <NotificationCenter />
             
-            <div className="flex items-center space-x-3">
+            <div className={`flex items-center space-x-3 px-3 py-2 rounded-lg border ${getRoleColor()}`}>
               <img 
                 src="/Vipul.png" 
                 alt="Vipul Sharma" 
@@ -59,6 +71,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuToggle, userRole }) => {
                 <p className="text-sm font-medium text-gray-900">Vipul Sharma</p>
                 <p className="text-xs text-gray-500">{getRoleDisplayName()}</p>
               </div>
+              <button
+                onClick={signOut}
+                className="text-xs text-gray-500 hover:text-gray-700 ml-2"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>

@@ -19,23 +19,33 @@ interface SidebarProps {
   isOpen: boolean;
   activeTab: string;
   onTabChange: (tab: string) => void;
-  userRole: 'logistics' | 'operator' | 'customer';
+  userRole: 'admin' | 'logistics' | 'operator' | 'customer';
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userRole }) => {
   const getMenuItems = () => {
     switch (userRole) {
+      case 'admin':
+        return [
+          { id: 'dashboard', label: 'Admin Dashboard', icon: Home },
+          { id: 'approvals', label: 'Shipment Approvals', icon: CheckCircle },
+          { id: 'verification', label: 'User Verification', icon: Shield },
+          { id: 'analytics', label: 'System Analytics', icon: BarChart3 },
+          { id: 'settings', label: 'System Settings', icon: Settings },
+        ];
       case 'logistics':
         return [
           { id: 'dashboard', label: 'Dashboard', icon: Home },
           { id: 'create-shipment', label: 'Create Shipment', icon: Package },
+          { id: 'shipment-approval', label: 'Approve Shipments', icon: CheckCircle },
           { id: 'tracking', label: 'Live Tracking', icon: MapPin },
+          { id: 'live-map', label: 'Live Map View', icon: Navigation },
+          { id: 'route-optimizer', label: 'AI Route Optimizer', icon: Globe },
           { id: 'operators', label: 'Manage Operators', icon: Users },
           { id: 'billing', label: 'Billing', icon: CreditCard },
           { id: 'analytics', label: 'Analytics', icon: BarChart3 },
           { id: 'company-registration', label: 'Company Registration', icon: FileText },
           { id: 'vehicle-registration', label: 'Vehicle Registration', icon: Truck },
-          { id: 'verification', label: 'Verification Dashboard', icon: Shield },
           { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },
         ];
@@ -45,6 +55,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'available-jobs', label: 'Available Jobs', icon: Package },
           { id: 'active-shipments', label: 'Active Shipments', icon: Truck },
           { id: 'tracking', label: 'Live Tracking', icon: MapPin },
+          { id: 'live-map', label: 'Live Map View', icon: Navigation },
           { id: 'earnings', label: 'Earnings', icon: CreditCard },
           { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },
@@ -54,6 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'dashboard', label: 'Dashboard', icon: Home },
           { id: 'my-shipments', label: 'My Shipments', icon: Package },
           { id: 'tracking', label: 'Track Shipment', icon: MapPin },
+          { id: 'live-map', label: 'Live Map View', icon: Navigation },
           { id: 'history', label: 'History', icon: Clock },
           { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },

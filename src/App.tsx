@@ -1,25 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppProvider } from './context/AppContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { DatabaseProvider } from './context/DatabaseContext';
+import AuthLogin from './components/AuthLogin';
+import AdminDashboard from './components/AdminDashboard';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import CreateShipment from './components/CreateShipment';
 import LiveTracking from './components/LiveTracking';
+import LiveTrackingMap from './components/LiveTrackingMap';
 import Analytics from './components/Analytics';
 import OperatorManagement from './components/OperatorManagement';
+import ShipmentApproval from './components/ShipmentApproval';
+import AIRouteOptimizer from './components/AIRouteOptimizer';
 import RoleSelector from './components/RoleSelector';
 import CompanyRegistration from './components/CompanyRegistration';
 import VehicleRegistration from './components/VehicleRegistration';
 import VerificationDashboard from './components/VerificationDashboard';
 import OperationalFlow from './components/OperationalFlow';
 
-function App() {
-  const [userRole, setUserRole] = useState<'logistics' | 'operator' | 'customer' | null>(null);
+const AppContent: React.FC = () => {
+  const { state: authState } = useAuth();
+  const [userRole, setUserRole] = useState<'admin' | 'logistics' | 'operator' | 'customer' | null>(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleRoleSelect = (role: 'logistics' | 'operator' | 'customer') => {
+  useEffect(() => {
+    if (authState.isAuthenticated && authState.user) {
+      setUserRole(authState.user.role);
+    }
+  }, [authState]);
+
+  const handleLogin = (role: 'admin' | 'logistics' | 'operator' | 'customer', userData: any) => {
     setUserRole(role);
     setActiveTab('dashboard');
   };
@@ -30,11 +43,30 @@ function App() {
   };
 
   const renderContent = () => {
+    // Admin-specific content
+    if (userRole === 'admin') {
+      switch (activeTab) {
+        case 'dashboard':
+          return <AdminDashboard />;
+        case 'approvals':
+          return <ShipmentApproval userRole="admin" />;
+        case 'verification':
+          return <VerificationDashboard />;
+        case 'analytics':
+          return <Analytics />;
+        default:
+          return <AdminDashboard />;
+      }
+    }
+
+    // Regular user content
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard userRole={userRole!} onTabChange={handleTabChange} />;
       case 'create-shipment':
         return <CreateShipment />;
+      case 'shipment-approval':
+        return <ShipmentApproval userRole={userRole as 'logistics'} />;
       case 'operators':
         return <OperatorManagement />;
       case 'tracking':
@@ -42,6 +74,18 @@ function App() {
       case 'available-jobs':
       case 'active-shipments':
         return <LiveTracking />;
+      case 'live-map':
+        return <LiveTrackingMap shipmentId="TAS-2024-001" />;
+      case 'route-optimizer':
+        return (
+          <AIRouteOptimizer
+            pickup={{ lat: 28.6139, lng: 77.2090, address: 'Delhi, India' }}
+            destination={{ lat: 19.0760, lng: 72.8777, address: 'Mumbai, India' }}
+            vehicleType="truck"
+            urgency="standard"
+            onRouteSelect={(route) => console.log('Selected route:', route)}
+          />
+        );
       case 'analytics':
         return <Analytics />;
       case 'company-registration':
@@ -57,12 +101,13 @@ function App() {
     }
   };
 
-  if (!userRole) {
-    return <RoleSelector onRoleSelect={handleRoleSelect} />;
+  // Show login if not authenticated
+  if (!authState.isAuthenticated || !userRole) {
+    return <AuthLogin onLogin={handleLogin} />;
   }
 
   return (
-    <DatabaseProvider userId="demo-user" userType="company">
+    <DatabaseProvider userId={authState.user?.id} userType="company">
       <AppProvider>
         <div className="min-h-screen bg-gray-50">
           <Header 
@@ -93,6 +138,18 @@ function App() {
         </div>
       </AppProvider>
     </DatabaseProvider>
+  );
+};
+
+function App() {
+  if (!userRole) {
+    return <RoleSelector onRoleSelect={handleRoleSelect} />;
+  }
+
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
