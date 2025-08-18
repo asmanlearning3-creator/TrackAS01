@@ -12,7 +12,12 @@ import {
   CheckCircle,
   FileText,
   Shield,
-  Globe
+  Globe,
+  Brain,
+  AlertTriangle,
+  Download,
+  Star,
+  Search
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -30,7 +35,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'dashboard', label: 'Admin Dashboard', icon: Home },
           { id: 'approvals', label: 'Shipment Approvals', icon: CheckCircle },
           { id: 'verification', label: 'User Verification', icon: Shield },
+          { id: 'disputes', label: 'Dispute Management', icon: AlertTriangle },
           { id: 'analytics', label: 'System Analytics', icon: BarChart3 },
+          { id: 'ai-insights', label: 'AI Insights', icon: Brain },
           { id: 'settings', label: 'System Settings', icon: Settings },
         ];
       case 'logistics':
@@ -39,11 +46,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'create-shipment', label: 'Create Shipment', icon: Package },
           { id: 'shipment-approval', label: 'Approve Shipments', icon: CheckCircle },
           { id: 'tracking', label: 'Live Tracking', icon: MapPin },
-          { id: 'live-map', label: 'Live Map View', icon: Navigation },
+          { id: 'live-map', label: 'Live Map View', icon: MapPin },
           { id: 'route-optimizer', label: 'AI Route Optimizer', icon: Globe },
           { id: 'operators', label: 'Manage Operators', icon: Users },
-          { id: 'billing', label: 'Billing', icon: CreditCard },
+          { id: 'invoices', label: 'Invoice Management', icon: FileText },
           { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+          { id: 'ai-insights', label: 'AI Insights', icon: Brain },
           { id: 'company-registration', label: 'Company Registration', icon: FileText },
           { id: 'vehicle-registration', label: 'Vehicle Registration', icon: Truck },
           { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
@@ -55,8 +63,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'available-jobs', label: 'Available Jobs', icon: Package },
           { id: 'active-shipments', label: 'Active Shipments', icon: Truck },
           { id: 'tracking', label: 'Live Tracking', icon: MapPin },
-          { id: 'live-map', label: 'Live Map View', icon: Navigation },
-          { id: 'earnings', label: 'Earnings', icon: CreditCard },
+          { id: 'live-map', label: 'Live Map View', icon: MapPin },
+          { id: 'invoices', label: 'Earnings & Invoices', icon: CreditCard },
           { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },
         ];
@@ -65,8 +73,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'dashboard', label: 'Dashboard', icon: Home },
           { id: 'my-shipments', label: 'My Shipments', icon: Package },
           { id: 'tracking', label: 'Track Shipment', icon: MapPin },
-          { id: 'live-map', label: 'Live Map View', icon: Navigation },
-          { id: 'history', label: 'History', icon: Clock },
+          { id: 'live-map', label: 'Live Map View', icon: MapPin },
+          { id: 'invoices', label: 'Invoices & Billing', icon: Download },
           { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },
         ];

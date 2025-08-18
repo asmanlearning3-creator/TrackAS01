@@ -2,6 +2,7 @@ import React from 'react';
 import { Menu } from 'lucide-react';
 import NotificationCenter from './NotificationCenter';
 import ConnectionStatus from './ConnectionStatus';
+import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
   onMenuToggle: () => void;
