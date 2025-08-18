@@ -142,10 +142,6 @@ const AppContent: React.FC = () => {
 };
 
 function App() {
-  if (!userRole) {
-    return <RoleSelector onRoleSelect={handleRoleSelect} />;
-  }
-
   return (
     <AuthProvider>
       <AppContent />
