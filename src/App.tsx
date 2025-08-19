@@ -19,6 +19,12 @@ import CompanyRegistration from './components/CompanyRegistration';
 import VehicleRegistration from './components/VehicleRegistration';
 import VerificationDashboard from './components/VerificationDashboard';
 import OperationalFlow from './components/OperationalFlow';
+import UnifiedRegistration from './components/UnifiedRegistration';
+import DedicatedLoginPages from './components/DedicatedLoginPages';
+import CustomerTrackingPortal from './components/CustomerTrackingPortal';
+import PredictiveETA from './components/PredictiveETA';
+import DemandForecasting from './components/DemandForecasting';
+import AnomalyDetection from './components/AnomalyDetection';
 
 const AppContent: React.FC = () => {
   const { state: authState } = useAuth();
@@ -96,6 +102,28 @@ const AppContent: React.FC = () => {
         return <VerificationDashboard />;
       case 'operational-flow':
         return <OperationalFlow />;
+      case 'unified-registration':
+        return <UnifiedRegistration />;
+      case 'admin-login':
+        return <DedicatedLoginPages userType="admin" />;
+      case 'company-login':
+        return <DedicatedLoginPages userType="logistics" />;
+      case 'operator-login':
+        return <DedicatedLoginPages userType="operator" />;
+      case 'customer-tracking':
+        return <CustomerTrackingPortal />;
+      case 'predictive-eta':
+        return (
+          <PredictiveETA
+            shipmentId="TAS-2024-001"
+            currentLocation={{ lat: 28.6139, lng: 77.2090, address: 'Delhi, India' }}
+            destination={{ lat: 19.0760, lng: 72.8777, address: 'Mumbai, India' }}
+          />
+        );
+      case 'demand-forecasting':
+        return <DemandForecasting />;
+      case 'anomaly-detection':
+        return <AnomalyDetection />;
       default:
         return <Dashboard userRole={userRole!} onTabChange={handleTabChange} />;
     }

@@ -206,6 +206,27 @@ const AuthLogin: React.FC<AuthLoginProps> = ({ onLogin }) => {
                 </>
               )}
             </button>
+            
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => window.location.href = '/admin-login'}
+                className="text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded transition-colors"
+              >
+                Admin Portal
+              </button>
+              <button
+                onClick={() => window.location.href = '/company-login'}
+                className="text-xs bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded transition-colors"
+              >
+                Company Portal
+              </button>
+              <button
+                onClick={() => window.location.href = '/operator-login'}
+                className="text-xs bg-green-100 hover:bg-green-200 px-2 py-1 rounded transition-colors"
+              >
+                Operator Portal
+              </button>
+            </div>
           </form>
 
           {/* Demo Credentials */}

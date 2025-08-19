@@ -9,8 +9,10 @@ import {
   Zap,
   AlertTriangle,
   CheckCircle,
-  RefreshCw
+  RefreshCw,
+  Brain
 } from 'lucide-react';
+import PredictiveETA from './PredictiveETA';
 
 interface TrackingData {
   shipmentId: string;
@@ -254,10 +256,20 @@ const LiveTrackingMap: React.FC<LiveTrackingMapProps> = ({ shipmentId, onStatusU
           </div>
         </div>
 
+        {/* Predictive ETA Component */}
+        <div className="mt-6">
+          <PredictiveETA
+            shipmentId={trackingData.shipmentId}
+            currentLocation={trackingData.currentLocation}
+            destination={trackingData.destination}
+            onETAUpdate={(eta) => console.log('ETA updated:', eta)}
+          />
+        </div>
+
         {/* AI Insights */}
         <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
           <div className="flex items-center space-x-2 mb-3">
-            <Zap className="h-5 w-5 text-purple-600" />
+            <Brain className="h-5 w-5 text-purple-600" />
             <h5 className="font-medium text-purple-900">AI Insights</h5>
           </div>
           <div className="space-y-2 text-sm text-purple-800">

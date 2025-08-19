@@ -17,7 +17,12 @@ import {
   AlertTriangle,
   Download,
   Star,
-  Search
+  Search,
+  UserPlus,
+  LogIn,
+  Activity,
+  Zap,
+  TrendingUp
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -38,6 +43,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'disputes', label: 'Dispute Management', icon: AlertTriangle },
           { id: 'analytics', label: 'System Analytics', icon: BarChart3 },
           { id: 'ai-insights', label: 'AI Insights', icon: Brain },
+          { id: 'anomaly-detection', label: 'Anomaly Detection', icon: Activity },
+          { id: 'demand-forecasting', label: 'Demand Forecasting', icon: TrendingUp },
+          { id: 'unified-registration', label: 'Registration Portal', icon: UserPlus },
+          { id: 'admin-login', label: 'Admin Login', icon: LogIn },
           { id: 'settings', label: 'System Settings', icon: Settings },
         ];
       case 'logistics':
@@ -52,6 +61,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'invoices', label: 'Invoice Management', icon: FileText },
           { id: 'analytics', label: 'Analytics', icon: BarChart3 },
           { id: 'ai-insights', label: 'AI Insights', icon: Brain },
+          { id: 'predictive-eta', label: 'Predictive ETA', icon: Zap },
+          { id: 'demand-forecasting', label: 'Demand Forecasting', icon: TrendingUp },
           { id: 'company-registration', label: 'Company Registration', icon: FileText },
           { id: 'vehicle-registration', label: 'Vehicle Registration', icon: Truck },
           { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
@@ -65,6 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'tracking', label: 'Live Tracking', icon: MapPin },
           { id: 'live-map', label: 'Live Map View', icon: MapPin },
           { id: 'invoices', label: 'Earnings & Invoices', icon: CreditCard },
+          { id: 'predictive-eta', label: 'Predictive ETA', icon: Zap },
           { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },
         ];
@@ -75,6 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'tracking', label: 'Track Shipment', icon: MapPin },
           { id: 'live-map', label: 'Live Map View', icon: MapPin },
           { id: 'invoices', label: 'Invoices & Billing', icon: Download },
+          { id: 'customer-tracking', label: 'Track Shipment', icon: Search },
           { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },
         ];

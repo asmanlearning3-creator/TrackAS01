@@ -10,30 +10,27 @@ import {
   EyeOff,
   FileText,
   MapPin,
-  Hash,
   CreditCard,
-  Upload,
+  Shield,
   CheckCircle,
   AlertCircle,
-  Shield,
-  Send,
-  Smartphone
+  Upload,
+  Hash,
+  Calendar
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 import { securityService } from '../services/securityService';
-import { notificationService } from '../services/notificationService';
 
 const UnifiedRegistration: React.FC = () => {
-  const { dispatch } = useApp();
-  const [selectedRole, setSelectedRole] = useState<'logistics' | 'operator'>('logistics');
+  const { signIn } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedRole, setSelectedRole] = useState<'logistics' | 'operator'>('logistics');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [verificationStep, setVerificationStep] = useState<'email' | 'phone' | 'documents' | 'complete'>('email');
-  const [emailOTPSent, setEmailOTPSent] = useState(false);
-  const [phoneOTPSent, setPhoneOTPSent] = useState(false);
-  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
 
   const [formData, setFormData] = useState({
     // Basic Information
@@ -42,8 +39,10 @@ const UnifiedRegistration: React.FC = () => {
     phone: '',
     password: '',
     confirmPassword: '',
+    otp: '',
+    emailOtp: '',
     
-    // Company-specific
+    // Company Information
     companyName: '',
     companyAddress: '',
     tin: '',
@@ -51,82 +50,26 @@ const UnifiedRegistration: React.FC = () => {
     contactPerson: '',
     fleetSize: '',
     
-    // Operator-specific
+    // Operator Information
     vehicleType: 'truck',
     vehicleRegistrationNumber: '',
     driverLicenseNumber: '',
-    vehicleCapacity: '',
+    vehicleWeightCapacity: '',
+    vehicleVolumeCapacity: '',
     bankAccountNumber: '',
-    ifscCode: '',
+    bankIFSC: '',
+    bankAccountHolder: '',
     
-    // Verification
-    emailOTP: '',
-    phoneOTP: '',
+    // Security
     captcha: '',
     termsAccepted: false,
-    privacyAccepted: false
+    privacyAccepted: false,
+    twoFactorEnabled: false
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [uploadedDocs, setUploadedDocs] = useState<Record<string, boolean>>({});
+  const [uploadedDocs, setUploadedDocs] = useState<Record<string, File>>({});
 
-  const sendEmailVerification = async () => {
-    try {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      await notificationService.sendEmail(
-        formData.email,
-        'TrackAS Email Verification',
-        `Your verification code is: ${otp}. This code will expire in 10 minutes.`
-      );
-      setEmailOTPSent(true);
-      dispatch({
-        type: 'ADD_NOTIFICATION',
-        payload: {
-          id: `NOT-${Date.now()}`,
-          type: 'info',
-          title: 'Email OTP Sent',
-          message: `Verification code sent to ${formData.email}`,
-          timestamp: 'Just now',
-          read: false
-        }
-      });
-    } catch (error) {
-      setErrors(prev => ({ ...prev, email: 'Failed to send verification email' }));
-    }
-  };
-
-  const sendPhoneVerification = async () => {
-    try {
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      await notificationService.sendSMS(
-        formData.phone,
-        `TrackAS verification code: ${otp}. Valid for 10 minutes.`
-      );
-      setPhoneOTPSent(true);
-      dispatch({
-        type: 'ADD_NOTIFICATION',
-        payload: {
-          id: `NOT-${Date.now()}`,
-          type: 'info',
-          title: 'Phone OTP Sent',
-          message: `Verification code sent to ${formData.phone}`,
-          timestamp: 'Just now',
-          read: false
-        }
-      });
-    } catch (error) {
-      setErrors(prev => ({ ...prev, phone: 'Failed to send verification SMS' }));
-    }
-  };
-
-  const generateCaptcha = () => {
-    const captcha = Math.floor(1000 + Math.random() * 9000).toString();
-    return captcha;
-  };
-
-  const verifyCaptcha = (input: string, expected: string) => {
-    return input === expected;
-  };
   const roles = [
     {
       id: 'logistics' as const,
@@ -134,7 +77,7 @@ const UnifiedRegistration: React.FC = () => {
       description: 'Register your company to manage fleet and shipments',
       icon: Building2,
       color: 'bg-blue-600',
-      features: ['Fleet Management', 'Shipment Creation', 'Analytics Dashboard', 'VCODE System']
+      features: ['Fleet Management', 'Shipment Creation', 'Analytics Dashboard', 'Operator Management']
     },
     {
       id: 'operator' as const,
@@ -142,7 +85,7 @@ const UnifiedRegistration: React.FC = () => {
       description: 'Register as an independent operator to accept shipments',
       icon: Truck,
       color: 'bg-green-600',
-      features: ['Job Assignments', 'Route Optimization', 'Earnings Tracking', 'Performance Analytics']
+      features: ['Job Assignments', 'Route Optimization', 'Earnings Tracking', 'Performance Metrics']
     }
   ];
 
@@ -150,11 +93,15 @@ const UnifiedRegistration: React.FC = () => {
     const newErrors: Record<string, string> = {};
 
     if (step === 1) {
+      if (!selectedRole) newErrors.role = 'Please select a role';
+    }
+
+    if (step === 2) {
       if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
       if (!formData.email.trim()) newErrors.email = 'Email is required';
       if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
       if (!formData.password) newErrors.password = 'Password is required';
-      if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+      if (!formData.confirmPassword) newErrors.confirmPassword = 'Please confirm password';
       
       // Email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -162,19 +109,28 @@ const UnifiedRegistration: React.FC = () => {
         newErrors.email = 'Please enter a valid email address';
       }
       
-      // Password strength
-      if (formData.password && formData.password.length < 8) {
-        newErrors.password = 'Password must be at least 8 characters';
-      }
-
       // Phone validation
       const phoneRegex = /^[+]?[\d\s-()]{10,15}$/;
       if (formData.phone && !phoneRegex.test(formData.phone)) {
         newErrors.phone = 'Please enter a valid phone number';
       }
+      
+      // Password validation
+      if (formData.password && formData.password.length < 8) {
+        newErrors.password = 'Password must be at least 8 characters';
+      }
+      
+      if (formData.password !== formData.confirmPassword) {
+        newErrors.confirmPassword = 'Passwords do not match';
+      }
     }
 
-    if (step === 2) {
+    if (step === 3) {
+      if (!emailVerified) newErrors.emailVerification = 'Please verify your email';
+      if (!phoneVerified) newErrors.phoneVerification = 'Please verify your phone number';
+    }
+
+    if (step === 4) {
       if (selectedRole === 'logistics') {
         if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required';
         if (!formData.companyAddress.trim()) newErrors.companyAddress = 'Company address is required';
@@ -184,18 +140,21 @@ const UnifiedRegistration: React.FC = () => {
       } else {
         if (!formData.vehicleRegistrationNumber.trim()) newErrors.vehicleRegistrationNumber = 'Vehicle registration number is required';
         if (!formData.driverLicenseNumber.trim()) newErrors.driverLicenseNumber = 'Driver license number is required';
-        if (!formData.vehicleCapacity.trim()) newErrors.vehicleCapacity = 'Vehicle capacity is required';
+        if (!formData.vehicleWeightCapacity || parseFloat(formData.vehicleWeightCapacity) <= 0) {
+          newErrors.vehicleWeightCapacity = 'Valid weight capacity is required';
+        }
+        if (!formData.vehicleVolumeCapacity || parseFloat(formData.vehicleVolumeCapacity) <= 0) {
+          newErrors.vehicleVolumeCapacity = 'Valid volume capacity is required';
+        }
         if (!formData.bankAccountNumber.trim()) newErrors.bankAccountNumber = 'Bank account number is required';
-        if (!formData.ifscCode.trim()) newErrors.ifscCode = 'IFSC code is required';
+        if (!formData.bankIFSC.trim()) newErrors.bankIFSC = 'Bank IFSC code is required';
+        if (!formData.bankAccountHolder.trim()) newErrors.bankAccountHolder = 'Account holder name is required';
       }
     }
 
-    if (step === 3) {
-      if (!emailOTPSent || !formData.emailOTP) newErrors.emailOTP = 'Email verification required';
-      if (!phoneOTPSent || !formData.phoneOTP) newErrors.phoneOTP = 'Phone verification required';
-      if (!captchaVerified) newErrors.captcha = 'CAPTCHA verification required';
-      if (!formData.termsAccepted) newErrors.termsAccepted = 'You must accept the terms and conditions';
-      if (!formData.privacyAccepted) newErrors.privacyAccepted = 'You must accept the privacy policy';
+    if (step === 5) {
+      if (!formData.termsAccepted) newErrors.terms = 'Please accept the terms and conditions';
+      if (!formData.privacyAccepted) newErrors.privacy = 'Please accept the privacy policy';
     }
 
     setErrors(newErrors);
@@ -227,176 +186,147 @@ const UnifiedRegistration: React.FC = () => {
     }
   };
 
-  const sendEmailOTP = async () => {
-    // Simulate email OTP sending
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: {
-        id: `NOT-${Date.now()}`,
-        type: 'info',
-        title: 'Email OTP Sent',
-        message: `Verification code sent to ${formData.email}`,
-        timestamp: 'Just now',
-        read: false
-      }
-    });
+  const sendEmailVerification = async () => {
+    try {
+      // Simulate email verification
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      alert('Verification email sent! Please check your inbox.');
+      // In real app, this would send actual verification email
+      setTimeout(() => setEmailVerified(true), 3000);
+    } catch (error) {
+      setErrors(prev => ({ ...prev, email: 'Failed to send verification email' }));
+    }
   };
 
   const sendPhoneOTP = async () => {
-    // Simulate phone OTP sending
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: {
-        id: `NOT-${Date.now()}`,
-        type: 'info',
-        title: 'Phone OTP Sent',
-        message: `Verification code sent to ${formData.phone}`,
-        timestamp: 'Just now',
-        read: false
-      }
-    });
+    try {
+      // Simulate OTP sending
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setOtpSent(true);
+      alert('OTP sent to your phone number!');
+    } catch (error) {
+      setErrors(prev => ({ ...prev, phone: 'Failed to send OTP' }));
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateStep(3) || isSubmitting) return;
+  const verifyOTP = async () => {
+    if (formData.otp.length === 6) {
+      setPhoneVerified(true);
+      alert('Phone number verified successfully!');
+    } else {
+      setErrors(prev => ({ ...prev, otp: 'Please enter a valid 6-digit OTP' }));
+    }
+  };
+
+  const handleFileUpload = (docType: string, file: File) => {
+    setUploadedDocs(prev => ({ ...prev, [docType]: file }));
+  };
+
+  const handleSubmit = async () => {
+    if (!validateStep(5) || isSubmitting) return;
 
     setIsSubmitting(true);
 
     try {
-      // Hash password before storing
+      // Hash password
       const hashedPassword = await securityService.hashPassword(formData.password);
       
-      // Simulate registration process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      if (selectedRole === 'logistics') {
-        const companyData = {
-          id: `COMP-${Date.now()}`,
-          name: formData.companyName,
-          address: formData.companyAddress,
+      // Prepare registration data
+      const registrationData = {
+        role: selectedRole,
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        passwordHash: hashedPassword,
+        emailVerified,
+        phoneVerified,
+        ...(selectedRole === 'logistics' ? {
+          companyName: formData.companyName,
+          companyAddress: formData.companyAddress,
           tin: formData.tin,
           businessRegistrationNumber: formData.businessRegistrationNumber,
-          primaryContact: {
-            name: formData.contactPerson,
-            email: formData.email,
-            phone: formData.phone
-          },
-          fleetSize: parseInt(formData.fleetSize) || 0,
-          registrationDate: new Date().toISOString(),
-          status: 'pending' as const,
-          verificationStatus: {
-            tinVerified: false,
-            businessRegVerified: false,
-            documentsVerified: false
-          }
-          hashedPassword,
-          apiKey: securityService.generateApiKey()
-        };
-
-        dispatch({ type: 'ADD_COMPANY_REGISTRATION', payload: companyData });
-        
-        // Notify admin of new company registration
-        await notificationService.notifyAdminRegistration('company', companyData);
-      } else {
-        const vehicleData = {
-          id: `VEH-${Date.now()}`,
-          companyId: '', // For independent operators
-          vcode: `VC${Date.now()}`,
-          type: formData.vehicleType as any,
-          registrationNumber: formData.vehicleRegistrationNumber,
-          capacity: {
-            weight: parseFloat(formData.vehicleCapacity),
-            volume: parseFloat(formData.vehicleCapacity) * 0.5 // Estimate
-          },
-          driver: {
-            name: formData.fullName,
-            mobile: formData.phone,
-            licenseNumber: formData.driverLicenseNumber
-          },
-          status: 'pending' as const,
-          verificationStatus: {
-            registrationVerified: false,
-            insuranceVerified: false,
-            licenseVerified: false
-          },
-          registrationDate: new Date().toISOString(),
-          availability: 'available' as const
-          hashedPassword,
+          contactPerson: formData.contactPerson,
+          fleetSize: formData.fleetSize ? parseInt(formData.fleetSize) : null
+        } : {
+          vehicleType: formData.vehicleType,
+          vehicleRegistrationNumber: formData.vehicleRegistrationNumber,
+          driverLicenseNumber: formData.driverLicenseNumber,
+          vehicleWeightCapacity: parseFloat(formData.vehicleWeightCapacity),
+          vehicleVolumeCapacity: parseFloat(formData.vehicleVolumeCapacity),
           bankDetails: {
             accountNumber: formData.bankAccountNumber,
-            ifscCode: formData.ifscCode
+            ifscCode: formData.bankIFSC,
+            accountHolder: formData.bankAccountHolder
           }
-        };
+        }),
+        uploadedDocuments: Object.keys(uploadedDocs),
+        twoFactorEnabled: formData.twoFactorEnabled,
+        registrationDate: new Date().toISOString(),
+        status: 'pending_approval'
+      };
 
-        dispatch({ type: 'ADD_VEHICLE_REGISTRATION', payload: vehicleData });
-        
-        // Notify admin of new vehicle registration
-        await notificationService.notifyAdminRegistration('vehicle', vehicleData);
-      }
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      dispatch({
-        type: 'ADD_NOTIFICATION',
-        payload: {
-          id: `NOT-${Date.now()}`,
-          type: 'success',
-          title: 'Registration Submitted',
-          message: `Your ${selectedRole} registration has been submitted for approval. You will receive updates within 24-48 hours.`,
-          timestamp: 'Just now',
-          read: false
-        }
-      });
-
-      setCurrentStep(4);
+      alert('Registration submitted successfully! You will receive approval updates within 24-48 hours.');
+      setCurrentStep(6); // Success step
     } catch (error) {
-      dispatch({
-        type: 'ADD_NOTIFICATION',
-        payload: {
-          id: `NOT-${Date.now()}`,
-          type: 'error',
-          title: 'Registration Failed',
-          message: 'Failed to submit registration. Please try again.',
-          timestamp: 'Just now',
-          read: false
-        }
-      });
+      setErrors(prev => ({ ...prev, submit: 'Registration failed. Please try again.' }));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDocumentUpload = (docType: string) => {
-    // Simulate document upload
-    setUploadedDocs(prev => ({ ...prev, [docType]: true }));
-    dispatch({
-      type: 'ADD_NOTIFICATION',
-      payload: {
-        id: `NOT-${Date.now()}`,
-        type: 'success',
-        title: 'Document Uploaded',
-        message: `${docType} uploaded successfully`,
-        timestamp: 'Just now',
-        read: false
-      }
+  const resetForm = () => {
+    setFormData({
+      fullName: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+      otp: '',
+      emailOtp: '',
+      companyName: '',
+      companyAddress: '',
+      tin: '',
+      businessRegistrationNumber: '',
+      contactPerson: '',
+      fleetSize: '',
+      vehicleType: 'truck',
+      vehicleRegistrationNumber: '',
+      driverLicenseNumber: '',
+      vehicleWeightCapacity: '',
+      vehicleVolumeCapacity: '',
+      bankAccountNumber: '',
+      bankIFSC: '',
+      bankAccountHolder: '',
+      captcha: '',
+      termsAccepted: false,
+      privacyAccepted: false,
+      twoFactorEnabled: false
     });
+    setCurrentStep(1);
+    setErrors({});
+    setOtpSent(false);
+    setEmailVerified(false);
+    setPhoneVerified(false);
+    setUploadedDocs({});
   };
 
   // Success page
-  if (currentStep === 4) {
+  if (currentStep === 6) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
             <div className="text-center">
               <div className="bg-green-100 p-4 rounded-full w-16 h-16 mx-auto mb-6">
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Registration Submitted Successfully!</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Registration Submitted!</h2>
               <p className="text-gray-600 mb-6">
-                Your {selectedRole} registration has been submitted and is now under review by TrackAS Admin.
+                Your {selectedRole === 'logistics' ? 'company' : 'operator'} registration has been submitted 
+                and is now under review by TrackAS Admin.
               </p>
               
               <div className="bg-blue-50 rounded-lg p-6 mb-6">
@@ -416,36 +346,23 @@ const UnifiedRegistration: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-blue-800">Account activation and welcome email</span>
+                    <span className="text-blue-800">Account activation & login access</span>
                   </div>
                 </div>
               </div>
               
               <div className="space-y-3">
                 <button
-                  onClick={() => window.location.href = '/login'}
+                  onClick={resetForm}
                   className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Go to Login
+                  Register Another Account
                 </button>
                 <button
-                  onClick={() => {
-                    setCurrentStep(1);
-                    setFormData({
-                      fullName: '', email: '', phone: '', password: '', confirmPassword: '',
-                      companyName: '', companyAddress: '', tin: '', businessRegistrationNumber: '',
-                      contactPerson: '', fleetSize: '', vehicleType: 'truck', vehicleRegistrationNumber: '',
-                      driverLicenseNumber: '', vehicleCapacity: '', bankAccountNumber: '', ifscCode: '',
-                      emailOTP: '', phoneOTP: '', captcha: '', termsAccepted: false, privacyAccepted: false
-                    });
-                    setEmailOTPSent(false);
-                    setPhoneOTPSent(false);
-                    setCaptchaVerified(false);
-                    setUploadedDocs({});
-                  }}
-                  className="w-full bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
+                  onClick={() => window.location.href = '/login'}
+                  className="w-full border border-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Register Another Account
+                  Go to Login
                 </button>
               </div>
             </div>
@@ -469,10 +386,10 @@ const UnifiedRegistration: React.FC = () => {
           </div>
         </div>
 
-        {/* Progress Indicator */}
+        {/* Progress Steps */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {[1, 2, 3].map((step) => (
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
+            {[1, 2, 3, 4, 5].map((step) => (
               <div key={step} className="flex items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   currentStep >= step 
@@ -481,60 +398,65 @@ const UnifiedRegistration: React.FC = () => {
                 }`}>
                   {step}
                 </div>
-                {step < 3 && (
-                  <div className={`w-24 h-1 mx-4 ${
+                {step < 5 && (
+                  <div className={`w-16 h-1 mx-2 ${
                     currentStep > step ? 'bg-blue-600' : 'bg-gray-200'
                   }`} />
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-sm text-gray-600">Basic Info</span>
-            <span className="text-sm text-gray-600">Role Details</span>
-            <span className="text-sm text-gray-600">Verification</span>
+          <div className="flex justify-between mt-2 max-w-2xl mx-auto text-xs text-gray-600">
+            <span>Role</span>
+            <span>Basic Info</span>
+            <span>Verification</span>
+            <span>Details</span>
+            <span>Review</span>
           </div>
         </div>
-        {/* Role Selection */}
-        {currentStep === 1 && (
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Select Your Role</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              {roles.map((role) => {
-                const Icon = role.icon;
-                return (
-                  <div
-                    key={role.id}
-                    onClick={() => setSelectedRole(role.id)}
-                    className={`p-6 rounded-lg border-2 cursor-pointer transition-all ${
-                      selectedRole === role.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className={`${role.color} rounded-lg p-3 w-12 h-12 flex items-center justify-center mb-4`}>
-                      <Icon className="h-6 w-6 text-white" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{role.title}</h3>
-                    <p className="text-gray-600 mb-4">{role.description}</p>
-                    <div className="space-y-1">
-                      {role.features.map((feature, idx) => (
-                        <div key={idx} className="flex items-center space-x-2">
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                          <span className="text-sm text-gray-600">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
 
-            {/* Basic Information Form */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
-              
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
+          {/* Step 1: Role Selection */}
+          {currentStep === 1 && (
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Select Your Role</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {roles.map((role) => {
+                  const Icon = role.icon;
+                  return (
+                    <div
+                      key={role.id}
+                      onClick={() => setSelectedRole(role.id)}
+                      className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${
+                        selectedRole === role.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className={`${role.color} rounded-lg p-3 w-12 h-12 flex items-center justify-center mb-4`}>
+                        <Icon className="h-6 w-6 text-white" />
+                      </div>
+                      <h4 className="text-lg font-semibold text-gray-900 mb-2">{role.title}</h4>
+                      <p className="text-gray-600 mb-4">{role.description}</p>
+                      <div className="space-y-1">
+                        {role.features.map((feature, idx) => (
+                          <div key={idx} className="flex items-center space-x-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                            <span className="text-sm text-gray-600">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Basic Information */}
+          {currentStep === 2 && (
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Basic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -570,7 +492,7 @@ const UnifiedRegistration: React.FC = () => {
                       className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                         errors.email ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Enter your email address"
+                      placeholder="Enter your email"
                     />
                   </div>
                   {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
@@ -621,9 +543,6 @@ const UnifiedRegistration: React.FC = () => {
                     </button>
                   </div>
                   {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-                  <div className="mt-2 text-xs text-gray-500">
-                    Password must be at least 8 characters with uppercase, lowercase, number, and special character
-                  </div>
                 </div>
 
                 <div>
@@ -652,450 +571,475 @@ const UnifiedRegistration: React.FC = () => {
                   </div>
                   {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
                 </div>
+
+                <div className="md:col-span-2">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="twoFactorEnabled"
+                      checked={formData.twoFactorEnabled}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label className="ml-2 text-sm text-gray-600">
+                      Enable Two-Factor Authentication (Recommended)
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Role-Specific Information */}
-        {currentStep === 2 && (
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              {selectedRole === 'logistics' ? 'Company Information' : 'Vehicle & Driver Information'}
-            </h2>
-
-            {selectedRole === 'logistics' ? (
+          {/* Step 3: Verification */}
+          {currentStep === 3 && (
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Verification</h3>
+              
               <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Name *</label>
-                    <input
-                      type="text"
-                      name="companyName"
-                      value={formData.companyName}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.companyName ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter company name"
-                    />
-                    {errors.companyName && <p className="text-red-500 text-sm mt-1">{errors.companyName}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Person *</label>
-                    <input
-                      type="text"
-                      name="contactPerson"
-                      value={formData.contactPerson}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.contactPerson ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Primary contact person"
-                    />
-                    {errors.contactPerson && <p className="text-red-500 text-sm mt-1">{errors.contactPerson}</p>}
-                  </div>
-
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Address *</label>
-                    <textarea
-                      name="companyAddress"
-                      value={formData.companyAddress}
-                      onChange={handleChange}
-                      rows={3}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.companyAddress ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter complete company address"
-                    />
-                    {errors.companyAddress && <p className="text-red-500 text-sm mt-1">{errors.companyAddress}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">TIN Number *</label>
-                    <input
-                      type="text"
-                      name="tin"
-                      value={formData.tin}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.tin ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter TIN number"
-                    />
-                    {errors.tin && <p className="text-red-500 text-sm mt-1">{errors.tin}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Business Registration Number *</label>
-                    <input
-                      type="text"
-                      name="businessRegistrationNumber"
-                      value={formData.businessRegistrationNumber}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.businessRegistrationNumber ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter business registration number"
-                    />
-                    {errors.businessRegistrationNumber && <p className="text-red-500 text-sm mt-1">{errors.businessRegistrationNumber}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Fleet Size (Optional)</label>
-                    <input
-                      type="number"
-                      name="fleetSize"
-                      value={formData.fleetSize}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Number of vehicles"
-                      min="0"
-                    />
-                  </div>
-                </div>
-
-                {/* Document Upload Section */}
-                <div className="border-t border-gray-200 pt-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Required Documents</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Business Registration Certificate</span>
-                        {uploadedDocs.businessReg ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-600" />
-                        )}
+                {/* Email Verification */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <Mail className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <h4 className="font-medium text-blue-900">Email Verification</h4>
+                        <p className="text-sm text-blue-700">{formData.email}</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDocumentUpload('businessReg')}
-                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>{uploadedDocs.businessReg ? 'Uploaded' : 'Upload'}</span>
-                      </button>
                     </div>
-
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">TIN Certificate</span>
-                        {uploadedDocs.tinCert ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-600" />
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDocumentUpload('tinCert')}
-                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>{uploadedDocs.tinCert ? 'Uploaded' : 'Upload'}</span>
-                      </button>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      emailVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {emailVerified ? 'Verified' : 'Pending'}
                     </div>
                   </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Type *</label>
-                    <select
-                      name="vehicleType"
-                      value={formData.vehicleType}
-                      onChange={handleChange}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  
+                  {!emailVerified && (
+                    <button
+                      onClick={sendEmailVerification}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      <option value="truck">Truck</option>
-                      <option value="van">Van</option>
-                      <option value="bike">Bike</option>
-                      <option value="car">Car</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Registration Number *</label>
-                    <input
-                      type="text"
-                      name="vehicleRegistrationNumber"
-                      value={formData.vehicleRegistrationNumber}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.vehicleRegistrationNumber ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="HR-26-AB-1234"
-                    />
-                    {errors.vehicleRegistrationNumber && <p className="text-red-500 text-sm mt-1">{errors.vehicleRegistrationNumber}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Driver License Number *</label>
-                    <input
-                      type="text"
-                      name="driverLicenseNumber"
-                      value={formData.driverLicenseNumber}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.driverLicenseNumber ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter license number"
-                    />
-                    {errors.driverLicenseNumber && <p className="text-red-500 text-sm mt-1">{errors.driverLicenseNumber}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Vehicle Capacity (kg) *</label>
-                    <input
-                      type="number"
-                      name="vehicleCapacity"
-                      value={formData.vehicleCapacity}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.vehicleCapacity ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter capacity in kg"
-                      min="1"
-                    />
-                    {errors.vehicleCapacity && <p className="text-red-500 text-sm mt-1">{errors.vehicleCapacity}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bank Account Number *</label>
-                    <input
-                      type="text"
-                      name="bankAccountNumber"
-                      value={formData.bankAccountNumber}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.bankAccountNumber ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter bank account number"
-                    />
-                    {errors.bankAccountNumber && <p className="text-red-500 text-sm mt-1">{errors.bankAccountNumber}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">IFSC Code *</label>
-                    <input
-                      type="text"
-                      name="ifscCode"
-                      value={formData.ifscCode}
-                      onChange={handleChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.ifscCode ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="Enter IFSC code"
-                    />
-                    {errors.ifscCode && <p className="text-red-500 text-sm mt-1">{errors.ifscCode}</p>}
-                  </div>
-                </div>
-
-                {/* Document Upload Section */}
-                <div className="border-t border-gray-200 pt-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Required Documents</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Driver License</span>
-                        {uploadedDocs.driverLicense ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-600" />
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDocumentUpload('driverLicense')}
-                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>{uploadedDocs.driverLicense ? 'Uploaded' : 'Upload'}</span>
-                      </button>
-                    </div>
-
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-700">Vehicle Registration</span>
-                        {uploadedDocs.vehicleReg ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-600" />
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDocumentUpload('vehicleReg')}
-                        className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>{uploadedDocs.vehicleReg ? 'Uploaded' : 'Upload'}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Verification and Terms */}
-        {currentStep === 3 && (
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Verification & Security</h2>
-
-            <div className="space-y-6">
-              {/* Email Verification */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-3">Email Verification</h4>
-                <div className="flex space-x-3">
-                  <input
-                    type="text"
-                    name="emailOTP"
-                    value={formData.emailOTP}
-                    onChange={handleChange}
-                    className="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter email OTP"
-                    disabled={!emailOTPSent}
-                  />
-                  <button
-                    type="button"
-                    onClick={sendEmailVerification}
-                    disabled={emailOTPSent}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
-                  >
-                    <Send className="h-4 w-4" />
-                    <span>{emailOTPSent ? 'Sent' : 'Send OTP'}</span>
-                  </button>
-                </div>
-                {errors.emailOTP && <p className="text-red-500 text-sm mt-1">{errors.emailOTP}</p>}
-              </div>
-
-              {/* Phone Verification */}
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h4 className="font-medium text-green-900 mb-3">Phone Verification</h4>
-                <div className="flex space-x-3">
-                  <input
-                    type="text"
-                    name="phoneOTP"
-                    value={formData.phoneOTP}
-                    onChange={handleChange}
-                    className="flex-1 px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                    placeholder="Enter phone OTP"
-                    disabled={!phoneOTPSent}
-                  />
-                  <button
-                    type="button"
-                    onClick={sendPhoneVerification}
-                    disabled={phoneOTPSent}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
-                  >
-                    <Smartphone className="h-4 w-4" />
-                    <span>{phoneOTPSent ? 'Sent' : 'Send OTP'}</span>
-                  </button>
-                </div>
-                {errors.phoneOTP && <p className="text-red-500 text-sm mt-1">{errors.phoneOTP}</p>}
-              </div>
-
-              {/* CAPTCHA */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-3">Security Verification</h4>
-                <div className="flex items-center space-x-4">
-                  <div className="bg-white border-2 border-gray-300 rounded-lg p-3 font-mono text-lg tracking-wider">
-                    {generateCaptcha()}
-                  </div>
-                  <input
-                    type="text"
-                    name="captcha"
-                    value={formData.captcha}
-                    onChange={(e) => {
-                      handleChange(e);
-                      setCaptchaVerified(verifyCaptcha(e.target.value, generateCaptcha()));
-                    }}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
-                    placeholder="Enter CAPTCHA"
-                  />
-                  {captchaVerified && <CheckCircle className="h-5 w-5 text-green-600" />}
-                </div>
-                {errors.captcha && <p className="text-red-500 text-sm mt-1">{errors.captcha}</p>}
-              </div>
-              {/* Terms and Conditions */}
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    name="termsAccepted"
-                    checked={formData.termsAccepted}
-                    onChange={handleChange}
-                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <div>
-                    <label className="text-sm text-gray-700">
-                      I agree to the <a href="#" className="text-blue-600 hover:text-blue-800">Terms and Conditions</a> *
-                    </label>
-                    {errors.termsAccepted && <p className="text-red-500 text-sm mt-1">{errors.termsAccepted}</p>}
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="checkbox"
-                    name="privacyAccepted"
-                    checked={formData.privacyAccepted}
-                    onChange={handleChange}
-                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <div>
-                    <label className="text-sm text-gray-700">
-                      I agree to the <a href="#" className="text-blue-600 hover:text-blue-800">Privacy Policy</a> *
-                    </label>
-                    {errors.privacyAccepted && <p className="text-red-500 text-sm mt-1">{errors.privacyAccepted}</p>}
-                  </div>
-                </div>
-              </div>
-
-              {/* Security Notice */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Shield className="h-5 w-5 text-blue-600" />
-                  <h4 className="font-medium text-blue-800">Security & Verification</h4>
-                </div>
-                <div className="space-y-2 text-sm text-blue-700">
-                  <p>• Email verification link will be sent to your email address</p>
-                  <p>• Phone OTP will be sent for mobile verification</p>
-                  <p>• Documents will be verified by TrackAS Admin team</p>
-                  <p>• Account activation within 24-48 hours after approval</p>
-                </div>
-              </div>
-
-              <form onSubmit={handleSubmit}>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !formData.termsAccepted || !formData.privacyAccepted || !emailOTPSent || !phoneOTPSent || !captchaVerified}
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>Submitting Registration...</span>
-                    </>
-                  ) : (
-                    <span>Submit Registration</span>
+                      Send Verification Email
+                    </button>
                   )}
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
+                </div>
 
-        {/* Navigation */}
-        {currentStep < 4 && (
-          <div className="flex justify-between items-center mt-8">
+                {/* Phone Verification */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <Phone className="h-5 w-5 text-green-600" />
+                      <div>
+                        <h4 className="font-medium text-green-900">Phone Verification</h4>
+                        <p className="text-sm text-green-700">{formData.phone}</p>
+                      </div>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      phoneVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {phoneVerified ? 'Verified' : 'Pending'}
+                    </div>
+                  </div>
+                  
+                  {!phoneVerified && (
+                    <div className="space-y-4">
+                      {!otpSent ? (
+                        <button
+                          onClick={sendPhoneOTP}
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                          Send OTP
+                        </button>
+                      ) : (
+                        <div className="flex space-x-3">
+                          <input
+                            type="text"
+                            name="otp"
+                            value={formData.otp}
+                            onChange={handleChange}
+                            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            placeholder="Enter 6-digit OTP"
+                            maxLength={6}
+                          />
+                          <button
+                            onClick={verifyOTP}
+                            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                          >
+                            Verify
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Role-Specific Details */}
+          {currentStep === 4 && (
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">
+                {selectedRole === 'logistics' ? 'Company Details' : 'Vehicle & Driver Details'}
+              </h3>
+              
+              {selectedRole === 'logistics' ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Company Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="companyName"
+                        value={formData.companyName}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.companyName ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Enter company name"
+                      />
+                      {errors.companyName && <p className="text-red-500 text-sm mt-1">{errors.companyName}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Contact Person *
+                      </label>
+                      <input
+                        type="text"
+                        name="contactPerson"
+                        value={formData.contactPerson}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.contactPerson ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Primary contact person"
+                      />
+                      {errors.contactPerson && <p className="text-red-500 text-sm mt-1">{errors.contactPerson}</p>}
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Company Address *
+                      </label>
+                      <textarea
+                        name="companyAddress"
+                        value={formData.companyAddress}
+                        onChange={handleChange}
+                        rows={3}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.companyAddress ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Enter complete company address"
+                      />
+                      {errors.companyAddress && <p className="text-red-500 text-sm mt-1">{errors.companyAddress}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        TIN Number *
+                      </label>
+                      <input
+                        type="text"
+                        name="tin"
+                        value={formData.tin}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.tin ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Tax Identification Number"
+                      />
+                      {errors.tin && <p className="text-red-500 text-sm mt-1">{errors.tin}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Business Registration Number *
+                      </label>
+                      <input
+                        type="text"
+                        name="businessRegistrationNumber"
+                        value={formData.businessRegistrationNumber}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.businessRegistrationNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Business registration number"
+                      />
+                      {errors.businessRegistrationNumber && <p className="text-red-500 text-sm mt-1">{errors.businessRegistrationNumber}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Fleet Size (Optional)
+                      </label>
+                      <input
+                        type="number"
+                        name="fleetSize"
+                        value={formData.fleetSize}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Number of vehicles"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Vehicle Type *
+                      </label>
+                      <select
+                        name="vehicleType"
+                        value={formData.vehicleType}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="truck">Truck</option>
+                        <option value="van">Van</option>
+                        <option value="bike">Bike</option>
+                        <option value="car">Car</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Vehicle Registration Number *
+                      </label>
+                      <input
+                        type="text"
+                        name="vehicleRegistrationNumber"
+                        value={formData.vehicleRegistrationNumber}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.vehicleRegistrationNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="e.g., HR-26-AB-1234"
+                      />
+                      {errors.vehicleRegistrationNumber && <p className="text-red-500 text-sm mt-1">{errors.vehicleRegistrationNumber}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Driver License Number *
+                      </label>
+                      <input
+                        type="text"
+                        name="driverLicenseNumber"
+                        value={formData.driverLicenseNumber}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.driverLicenseNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Driver license number"
+                      />
+                      {errors.driverLicenseNumber && <p className="text-red-500 text-sm mt-1">{errors.driverLicenseNumber}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Weight Capacity (kg) *
+                      </label>
+                      <input
+                        type="number"
+                        name="vehicleWeightCapacity"
+                        value={formData.vehicleWeightCapacity}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.vehicleWeightCapacity ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Maximum weight capacity"
+                        min="1"
+                      />
+                      {errors.vehicleWeightCapacity && <p className="text-red-500 text-sm mt-1">{errors.vehicleWeightCapacity}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Volume Capacity (m³) *
+                      </label>
+                      <input
+                        type="number"
+                        name="vehicleVolumeCapacity"
+                        value={formData.vehicleVolumeCapacity}
+                        onChange={handleChange}
+                        step="0.1"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.vehicleVolumeCapacity ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Volume capacity"
+                        min="0.1"
+                      />
+                      {errors.vehicleVolumeCapacity && <p className="text-red-500 text-sm mt-1">{errors.vehicleVolumeCapacity}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Bank Account Number *
+                      </label>
+                      <input
+                        type="text"
+                        name="bankAccountNumber"
+                        value={formData.bankAccountNumber}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.bankAccountNumber ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Bank account number"
+                      />
+                      {errors.bankAccountNumber && <p className="text-red-500 text-sm mt-1">{errors.bankAccountNumber}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Bank IFSC Code *
+                      </label>
+                      <input
+                        type="text"
+                        name="bankIFSC"
+                        value={formData.bankIFSC}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.bankIFSC ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="IFSC code"
+                      />
+                      {errors.bankIFSC && <p className="text-red-500 text-sm mt-1">{errors.bankIFSC}</p>}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Account Holder Name *
+                      </label>
+                      <input
+                        type="text"
+                        name="bankAccountHolder"
+                        value={formData.bankAccountHolder}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.bankAccountHolder ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Account holder name"
+                      />
+                      {errors.bankAccountHolder && <p className="text-red-500 text-sm mt-1">{errors.bankAccountHolder}</p>}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 5: Document Upload & Terms */}
+          {currentStep === 5 && (
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-6">Document Upload & Terms</h3>
+              
+              <div className="space-y-6">
+                {/* Document Upload */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <h4 className="font-medium text-gray-900 mb-4">Required Documents</h4>
+                  <div className="space-y-4">
+                    {selectedRole === 'logistics' ? (
+                      <>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                          <div className="text-center">
+                            <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600">Business Registration Certificate</p>
+                            <input type="file" className="hidden" accept=".pdf,.jpg,.png" />
+                            <button className="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                              Choose File
+                            </button>
+                          </div>
+                        </div>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                          <div className="text-center">
+                            <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600">TIN Certificate</p>
+                            <input type="file" className="hidden" accept=".pdf,.jpg,.png" />
+                            <button className="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                              Choose File
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                          <div className="text-center">
+                            <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600">Driver License</p>
+                            <input type="file" className="hidden" accept=".pdf,.jpg,.png" />
+                            <button className="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                              Choose File
+                            </button>
+                          </div>
+                        </div>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                          <div className="text-center">
+                            <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600">Vehicle Registration Certificate</p>
+                            <input type="file" className="hidden" accept=".pdf,.jpg,.png" />
+                            <button className="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                              Choose File
+                            </button>
+                          </div>
+                        </div>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                          <div className="text-center">
+                            <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                            <p className="text-sm text-gray-600">Bank Account Proof</p>
+                            <input type="file" className="hidden" accept=".pdf,.jpg,.png" />
+                            <button className="mt-2 text-blue-600 hover:text-blue-800 text-sm">
+                              Choose File
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Terms and Conditions */}
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      name="termsAccepted"
+                      checked={formData.termsAccepted}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                    />
+                    <label className="text-sm text-gray-700">
+                      I agree to the <a href="/terms" className="text-blue-600 hover:text-blue-800">Terms and Conditions</a>
+                    </label>
+                  </div>
+                  {errors.terms && <p className="text-red-500 text-sm">{errors.terms}</p>}
+
+                  <div className="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      name="privacyAccepted"
+                      checked={formData.privacyAccepted}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                    />
+                    <label className="text-sm text-gray-700">
+                      I agree to the <a href="/privacy" className="text-blue-600 hover:text-blue-800">Privacy Policy</a>
+                    </label>
+                  </div>
+                  {errors.privacy && <p className="text-red-500 text-sm">{errors.privacy}</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-8">
             <button
               type="button"
               onClick={handlePrevious}
@@ -1105,18 +1049,7 @@ const UnifiedRegistration: React.FC = () => {
               Previous
             </button>
             
-            <div className="flex space-x-2">
-              {[1, 2, 3].map((step) => (
-                <div
-                  key={step}
-                  className={`w-3 h-3 rounded-full transition-all ${
-                    currentStep >= step ? 'bg-blue-600' : 'bg-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            
-            {currentStep < 3 ? (
+            {currentStep < 5 ? (
               <button
                 type="button"
                 onClick={handleNext}
@@ -1124,16 +1057,41 @@ const UnifiedRegistration: React.FC = () => {
               >
                 Next
               </button>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Submitting...</span>
+                  </>
+                ) : (
+                  <span>Submit Registration</span>
+                )}
+              </button>
+            )}
           </div>
-        )}
+
+          {errors.submit && (
+            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-red-700 text-sm">{errors.submit}</p>
+            </div>
+          )}
+        </div>
 
         {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-sm text-gray-600">
-            Already have an account? <a href="/login" className="text-blue-600 hover:text-blue-800 font-medium">Sign in here</a>
-          </p>
-          <div className="flex items-center justify-center space-x-2 text-gray-500 text-sm mt-4">
+          <div className="flex items-center justify-center space-x-2 text-gray-500 text-sm">
+            <span>Already have an account?</span>
+            <a href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
+              Sign in here
+            </a>
+          </div>
+          <div className="flex items-center justify-center space-x-2 text-gray-500 text-sm mt-2">
             <span>Powered by</span>
             <img 
               src="/Vipul.png" 

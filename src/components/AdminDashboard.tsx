@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useDatabase } from '../context/DatabaseContext';
+import AdminApprovalDashboard from './AdminApprovalDashboard';
 
 const AdminDashboard: React.FC = () => {
   const { state, dispatch } = useApp();
@@ -141,75 +142,7 @@ const AdminDashboard: React.FC = () => {
   );
 
   const renderApprovals = () => (
-    <div className="space-y-6">
-      {/* Company Approvals */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Company Registrations</h3>
-        <div className="space-y-4">
-          {companies?.filter(c => c.status === 'pending').map((company) => (
-            <div key={company.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900">{company.name}</h4>
-                  <p className="text-sm text-gray-600">{company.primaryContact.email}</p>
-                  <p className="text-sm text-gray-600">TIN: {company.tin}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleApproval('company', company.id, 'approve')}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    onClick={() => handleApproval('company', company.id, 'reject')}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
-                  >
-                    <XCircle className="h-4 w-4" />
-                    <span>Reject</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Vehicle Approvals */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Registrations</h3>
-        <div className="space-y-4">
-          {vehicles?.filter(v => v.status === 'pending').map((vehicle) => (
-            <div key={vehicle.id} className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-gray-900">{vehicle.registrationNumber}</h4>
-                  <p className="text-sm text-gray-600">Driver: {vehicle.driver.name}</p>
-                  <p className="text-sm text-gray-600">VCODE: {vehicle.vcode}</p>
-                </div>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleApproval('vehicle', vehicle.id, 'approve')}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    <span>Approve</span>
-                  </button>
-                  <button
-                    onClick={() => handleApproval('vehicle', vehicle.id, 'reject')}
-                    className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
-                  >
-                    <XCircle className="h-4 w-4" />
-                    <span>Reject</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
+    <AdminApprovalDashboard />
   );
 
   const renderAnalytics = () => (

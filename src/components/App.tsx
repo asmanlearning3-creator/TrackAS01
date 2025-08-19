@@ -65,6 +65,14 @@ const AppContent: React.FC = () => {
           return <Analytics />;
         case 'ai-insights':
           return <AIInsightsDashboard />;
+        case 'anomaly-detection':
+          return <AnomalyDetection />;
+        case 'demand-forecasting':
+          return <DemandForecasting />;
+        case 'unified-registration':
+          return <UnifiedRegistration />;
+        case 'admin-login':
+          return <DedicatedLoginPages userType="admin" />;
         default:
           return <AdminDashboard />;
       }
@@ -104,8 +112,20 @@ const AppContent: React.FC = () => {
         return <Analytics />;
       case 'ai-insights':
         return <AIInsightsDashboard />;
+      case 'predictive-eta':
+        return (
+          <PredictiveETA
+            shipmentId="TAS-2024-001"
+            currentLocation={{ lat: 28.6139, lng: 77.2090, address: 'Delhi, India' }}
+            destination={{ lat: 19.0760, lng: 72.8777, address: 'Mumbai, India' }}
+          />
+        );
+      case 'demand-forecasting':
+        return <DemandForecasting />;
       case 'invoices':
         return <InvoiceManagement userRole={userRole!} />;
+      case 'customer-tracking':
+        return <CustomerTrackingPortal />;
       case 'company-registration':
         return <CompanyRegistration />;
       case 'vehicle-registration':

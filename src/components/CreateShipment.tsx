@@ -3,12 +3,15 @@ import { Package, MapPin, Clock, User, CreditCard, Truck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useDatabase } from '../context/DatabaseContext';
 import LoadingSpinner from './LoadingSpinner';
+import DynamicPricing from './DynamicPricing';
 import { Shipment } from '../types';
 
 const CreateShipment: React.FC = () => {
   const { dispatch } = useApp();
   const { createShipment, createCustomer, shipmentsLoading } = useDatabase();
   const [model, setModel] = useState<'subscription' | 'pay-per-shipment'>('subscription');
+  const [showPricing, setShowPricing] = useState(false);
+  const [calculatedPrice, setCalculatedPrice] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     pickupLocation: '',
     destination: '',
@@ -138,6 +141,19 @@ const CreateShipment: React.FC = () => {
       [e.target.name]: e.target.value,
     });
   };
+
+  const handlePriceCalculated = (pricing: any) => {
+    setCalculatedPrice(pricing.finalPrice);
+    setFormData(prev => ({ ...prev, price: pricing.finalPrice.toString() }));
+  };
+
+  const getShipmentDataForPricing = () => ({
+    distance: 250, // Default distance, would be calculated from addresses
+    weight: parseFloat(formData.weight) || 0,
+    urgency: formData.urgency as 'standard' | 'urgent' | 'express',
+    pickupLocation: formData.pickupLocation,
+    destinationLocation: formData.destination
+  });
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -359,31 +375,57 @@ const CreateShipment: React.FC = () => {
               Pricing
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Shipment Price (₹)</label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter price"
-                  required
-                />
+            {!showPricing ? (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowPricing(true)}
+                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 mx-auto"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  <span>Calculate AI Pricing</span>
+                </button>
+                <p className="text-sm text-gray-600 mt-2">
+                  Get AI-optimized pricing based on real-time market conditions
+                </p>
               </div>
-              
-              <div className="flex items-end">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600">Estimated based on:</p>
-                  <ul className="text-xs text-gray-500 mt-1">
-                    <li>• Distance & Weight</li>
-                    <li>• Urgency Level</li>
-                    <li>• Special Handling</li>
-                  </ul>
+            ) : (
+              <div className="space-y-6">
+                <DynamicPricing
+                  shipmentData={getShipmentDataForPricing()}
+                  onPriceCalculated={handlePriceCalculated}
+                />
+                
+                {calculatedPrice && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-green-800">Final Price:</span>
+                      <span className="text-lg font-bold text-green-900">₹{calculatedPrice.toLocaleString()}</span>
+                    </div>
+                    <p className="text-xs text-green-700 mt-1">
+                      This price has been automatically set based on AI analysis
+                    </p>
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Manual Price Override (Optional)
+                  </label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Override AI pricing if needed"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Leave empty to use AI-calculated price
+                  </p>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
