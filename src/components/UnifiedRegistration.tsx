@@ -15,9 +15,13 @@ import {
   Upload,
   CheckCircle,
   AlertCircle,
-  Shield
+  Shield,
+  Send,
+  Smartphone
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { securityService } from '../services/securityService';
+import { notificationService } from '../services/notificationService';
 
 const UnifiedRegistration: React.FC = () => {
   const { dispatch } = useApp();
@@ -27,6 +31,9 @@ const UnifiedRegistration: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verificationStep, setVerificationStep] = useState<'email' | 'phone' | 'documents' | 'complete'>('email');
+  const [emailOTPSent, setEmailOTPSent] = useState(false);
+  const [phoneOTPSent, setPhoneOTPSent] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
 
   const [formData, setFormData] = useState({
     // Basic Information
@@ -63,6 +70,63 @@ const UnifiedRegistration: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [uploadedDocs, setUploadedDocs] = useState<Record<string, boolean>>({});
 
+  const sendEmailVerification = async () => {
+    try {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      await notificationService.sendEmail(
+        formData.email,
+        'TrackAS Email Verification',
+        `Your verification code is: ${otp}. This code will expire in 10 minutes.`
+      );
+      setEmailOTPSent(true);
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        payload: {
+          id: `NOT-${Date.now()}`,
+          type: 'info',
+          title: 'Email OTP Sent',
+          message: `Verification code sent to ${formData.email}`,
+          timestamp: 'Just now',
+          read: false
+        }
+      });
+    } catch (error) {
+      setErrors(prev => ({ ...prev, email: 'Failed to send verification email' }));
+    }
+  };
+
+  const sendPhoneVerification = async () => {
+    try {
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      await notificationService.sendSMS(
+        formData.phone,
+        `TrackAS verification code: ${otp}. Valid for 10 minutes.`
+      );
+      setPhoneOTPSent(true);
+      dispatch({
+        type: 'ADD_NOTIFICATION',
+        payload: {
+          id: `NOT-${Date.now()}`,
+          type: 'info',
+          title: 'Phone OTP Sent',
+          message: `Verification code sent to ${formData.phone}`,
+          timestamp: 'Just now',
+          read: false
+        }
+      });
+    } catch (error) {
+      setErrors(prev => ({ ...prev, phone: 'Failed to send verification SMS' }));
+    }
+  };
+
+  const generateCaptcha = () => {
+    const captcha = Math.floor(1000 + Math.random() * 9000).toString();
+    return captcha;
+  };
+
+  const verifyCaptcha = (input: string, expected: string) => {
+    return input === expected;
+  };
   const roles = [
     {
       id: 'logistics' as const,
@@ -102,6 +166,12 @@ const UnifiedRegistration: React.FC = () => {
       if (formData.password && formData.password.length < 8) {
         newErrors.password = 'Password must be at least 8 characters';
       }
+
+      // Phone validation
+      const phoneRegex = /^[+]?[\d\s-()]{10,15}$/;
+      if (formData.phone && !phoneRegex.test(formData.phone)) {
+        newErrors.phone = 'Please enter a valid phone number';
+      }
     }
 
     if (step === 2) {
@@ -121,6 +191,9 @@ const UnifiedRegistration: React.FC = () => {
     }
 
     if (step === 3) {
+      if (!emailOTPSent || !formData.emailOTP) newErrors.emailOTP = 'Email verification required';
+      if (!phoneOTPSent || !formData.phoneOTP) newErrors.phoneOTP = 'Phone verification required';
+      if (!captchaVerified) newErrors.captcha = 'CAPTCHA verification required';
       if (!formData.termsAccepted) newErrors.termsAccepted = 'You must accept the terms and conditions';
       if (!formData.privacyAccepted) newErrors.privacyAccepted = 'You must accept the privacy policy';
     }
@@ -194,6 +267,9 @@ const UnifiedRegistration: React.FC = () => {
     setIsSubmitting(true);
 
     try {
+      // Hash password before storing
+      const hashedPassword = await securityService.hashPassword(formData.password);
+      
       // Simulate registration process
       await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -217,9 +293,14 @@ const UnifiedRegistration: React.FC = () => {
             businessRegVerified: false,
             documentsVerified: false
           }
+          hashedPassword,
+          apiKey: securityService.generateApiKey()
         };
 
         dispatch({ type: 'ADD_COMPANY_REGISTRATION', payload: companyData });
+        
+        // Notify admin of new company registration
+        await notificationService.notifyAdminRegistration('company', companyData);
       } else {
         const vehicleData = {
           id: `VEH-${Date.now()}`,
@@ -244,9 +325,17 @@ const UnifiedRegistration: React.FC = () => {
           },
           registrationDate: new Date().toISOString(),
           availability: 'available' as const
+          hashedPassword,
+          bankDetails: {
+            accountNumber: formData.bankAccountNumber,
+            ifscCode: formData.ifscCode
+          }
         };
 
         dispatch({ type: 'ADD_VEHICLE_REGISTRATION', payload: vehicleData });
+        
+        // Notify admin of new vehicle registration
+        await notificationService.notifyAdminRegistration('vehicle', vehicleData);
       }
 
       dispatch({
@@ -349,6 +438,10 @@ const UnifiedRegistration: React.FC = () => {
                       driverLicenseNumber: '', vehicleCapacity: '', bankAccountNumber: '', ifscCode: '',
                       emailOTP: '', phoneOTP: '', captcha: '', termsAccepted: false, privacyAccepted: false
                     });
+                    setEmailOTPSent(false);
+                    setPhoneOTPSent(false);
+                    setCaptchaVerified(false);
+                    setUploadedDocs({});
                   }}
                   className="w-full bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors"
                 >
@@ -376,6 +469,32 @@ const UnifiedRegistration: React.FC = () => {
           </div>
         </div>
 
+        {/* Progress Indicator */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                  currentStep >= step 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {step}
+                </div>
+                {step < 3 && (
+                  <div className={`w-24 h-1 mx-4 ${
+                    currentStep > step ? 'bg-blue-600' : 'bg-gray-200'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-sm text-gray-600">Basic Info</span>
+            <span className="text-sm text-gray-600">Role Details</span>
+            <span className="text-sm text-gray-600">Verification</span>
+          </div>
+        </div>
         {/* Role Selection */}
         {currentStep === 1 && (
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
@@ -502,6 +621,9 @@ const UnifiedRegistration: React.FC = () => {
                     </button>
                   </div>
                   {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+                  <div className="mt-2 text-xs text-gray-500">
+                    Password must be at least 8 characters with uppercase, lowercase, number, and special character
+                  </div>
                 </div>
 
                 <div>
@@ -822,12 +944,86 @@ const UnifiedRegistration: React.FC = () => {
           </div>
         )}
 
-        {/* Terms and Verification */}
+        {/* Verification and Terms */}
         {currentStep === 3 && (
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Terms & Verification</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Verification & Security</h2>
 
             <div className="space-y-6">
+              {/* Email Verification */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 mb-3">Email Verification</h4>
+                <div className="flex space-x-3">
+                  <input
+                    type="text"
+                    name="emailOTP"
+                    value={formData.emailOTP}
+                    onChange={handleChange}
+                    className="flex-1 px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter email OTP"
+                    disabled={!emailOTPSent}
+                  />
+                  <button
+                    type="button"
+                    onClick={sendEmailVerification}
+                    disabled={emailOTPSent}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
+                  >
+                    <Send className="h-4 w-4" />
+                    <span>{emailOTPSent ? 'Sent' : 'Send OTP'}</span>
+                  </button>
+                </div>
+                {errors.emailOTP && <p className="text-red-500 text-sm mt-1">{errors.emailOTP}</p>}
+              </div>
+
+              {/* Phone Verification */}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="font-medium text-green-900 mb-3">Phone Verification</h4>
+                <div className="flex space-x-3">
+                  <input
+                    type="text"
+                    name="phoneOTP"
+                    value={formData.phoneOTP}
+                    onChange={handleChange}
+                    className="flex-1 px-3 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    placeholder="Enter phone OTP"
+                    disabled={!phoneOTPSent}
+                  />
+                  <button
+                    type="button"
+                    onClick={sendPhoneVerification}
+                    disabled={phoneOTPSent}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center space-x-2"
+                  >
+                    <Smartphone className="h-4 w-4" />
+                    <span>{phoneOTPSent ? 'Sent' : 'Send OTP'}</span>
+                  </button>
+                </div>
+                {errors.phoneOTP && <p className="text-red-500 text-sm mt-1">{errors.phoneOTP}</p>}
+              </div>
+
+              {/* CAPTCHA */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-medium text-gray-900 mb-3">Security Verification</h4>
+                <div className="flex items-center space-x-4">
+                  <div className="bg-white border-2 border-gray-300 rounded-lg p-3 font-mono text-lg tracking-wider">
+                    {generateCaptcha()}
+                  </div>
+                  <input
+                    type="text"
+                    name="captcha"
+                    value={formData.captcha}
+                    onChange={(e) => {
+                      handleChange(e);
+                      setCaptchaVerified(verifyCaptcha(e.target.value, generateCaptcha()));
+                    }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500"
+                    placeholder="Enter CAPTCHA"
+                  />
+                  {captchaVerified && <CheckCircle className="h-5 w-5 text-green-600" />}
+                </div>
+                {errors.captcha && <p className="text-red-500 text-sm mt-1">{errors.captcha}</p>}
+              </div>
               {/* Terms and Conditions */}
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
@@ -880,7 +1076,7 @@ const UnifiedRegistration: React.FC = () => {
               <form onSubmit={handleSubmit}>
                 <button
                   type="submit"
-                  disabled={isSubmitting || !formData.termsAccepted || !formData.privacyAccepted}
+                  disabled={isSubmitting || !formData.termsAccepted || !formData.privacyAccepted || !emailOTPSent || !phoneOTPSent || !captchaVerified}
                   className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
                 >
                   {isSubmitting ? (
