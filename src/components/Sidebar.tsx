@@ -19,7 +19,6 @@ import {
   Star,
   Search,
   UserPlus,
-  LogIn,
   Activity,
   Zap,
   TrendingUp
@@ -46,7 +45,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'anomaly-detection', label: 'Anomaly Detection', icon: Activity },
           { id: 'demand-forecasting', label: 'Demand Forecasting', icon: TrendingUp },
           { id: 'unified-registration', label: 'Registration Portal', icon: UserPlus },
-          { id: 'admin-login', label: 'Admin Login', icon: LogIn },
           { id: 'settings', label: 'System Settings', icon: Settings },
         ];
       case 'logistics':
