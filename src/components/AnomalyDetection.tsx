@@ -365,7 +365,7 @@ const AnomalyDetection: React.FC = () => {
                   <label className="text-sm font-medium text-gray-700">AI Recommendation</label>
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-1">
                     <div className="flex items-start space-x-2">
-                      <Lightbulb className="h-4 w-4 text-blue-600 mt-0.5" />
+                      <Brain className="h-4 w-4 text-blue-600 mt-0.5" />
                       <p className="text-sm text-blue-800">{selectedAnomalyData.recommendation}</p>
                     </div>
                   </div>
