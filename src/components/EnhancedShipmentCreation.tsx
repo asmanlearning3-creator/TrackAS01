@@ -11,9 +11,9 @@ import {
   Phone,
   Mail,
   Calendar,
-  Weight,
+  Scale,
   Ruler,
-  Thermometer,
+  ThermometerSun,
   Shield,
   Zap
 } from 'lucide-react';
@@ -668,7 +668,7 @@ const EnhancedShipmentCreation: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Weight (kg) *</label>
                 <div className="relative">
-                  <Weight className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Scale className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="number"
                     name="weight"
@@ -774,7 +774,7 @@ const EnhancedShipmentCreation: React.FC = () => {
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Temperature Range *</label>
                   <div className="relative">
-                    <Thermometer className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <ThermometerSun className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
                       type="text"
                       name="temperatureRange"

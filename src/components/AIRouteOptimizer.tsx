@@ -9,7 +9,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Zap,
-  Route
+  MapPin
 } from 'lucide-react';
 
 interface RouteOption {
@@ -212,7 +212,7 @@ const AIRouteOptimizer: React.FC<AIRouteOptimizerProps> = ({
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
-                  <Route className="h-5 w-5 text-blue-600" />
+                  <MapPin className="h-5 w-5 text-blue-600" />
                   <div>
                     <h5 className="font-medium text-gray-900">{route.name}</h5>
                     {getRouteRecommendation(route) && (
