@@ -8,8 +8,7 @@ import {
   TrendingUp, 
   AlertTriangle,
   CheckCircle,
-  Zap,
-  MapPin
+  Zap
 } from 'lucide-react';
 
 interface RouteOption {
