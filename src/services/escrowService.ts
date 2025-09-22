@@ -494,3 +494,4 @@ export class EscrowService {
 }
 
 export const escrowService = EscrowService.getInstance();
+

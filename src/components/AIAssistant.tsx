@@ -318,3 +318,4 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ userRole, userId, isOpen, onC
 };
 
 export default AIAssistant;
+

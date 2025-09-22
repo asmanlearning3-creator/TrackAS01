@@ -476,3 +476,4 @@ export class AIAssistantService {
 }
 
 export const aiAssistantService = AIAssistantService.getInstance();
+
