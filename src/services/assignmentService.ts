@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase';
-import { escrowService } from './escrowService';
 
 export interface AssignmentRequest {
   shipmentId: string;
@@ -28,6 +27,8 @@ export interface AssignmentResult {
   price?: number;
   escalationLevel?: number;
   error?: string;
+  needsEscalation?: boolean;
+  escalationReason?: string;
 }
 
 export interface FleetAssignment {
@@ -53,8 +54,37 @@ export interface IndividualAssignment {
 
 export class AssignmentService {
   private static instance: AssignmentService;
-  private readonly RESPONSE_TIMEOUT = 2 * 60 * 1000; // 2 minutes in milliseconds
-  private readonly ESCALATION_LEVELS = [1.1, 1.2, 1.3]; // 10%, 20%, 30% increases
+  private assignmentTimeoutSeconds = 120;
+  private maxRetries = 3;
+  private dynamicPricingConfig = {
+    first_retry: 10,
+    second_retry: 20,
+    third_retry: 0
+  };
+  private readonly RESPONSE_TIMEOUT = 2 * 60 * 1000;
+
+  constructor() {
+    this.loadAdminSettings();
+  }
+
+  private async loadAdminSettings() {
+    const { data: settings } = await supabase
+      .from('admin_settings')
+      .select('setting_key, setting_value')
+      .in('setting_key', ['assignment_timeout_seconds', 'max_assignment_retries', 'dynamic_pricing_escalation']);
+
+    if (settings) {
+      settings.forEach(setting => {
+        if (setting.setting_key === 'assignment_timeout_seconds') {
+          this.assignmentTimeoutSeconds = parseInt(setting.setting_value as string);
+        } else if (setting.setting_key === 'max_assignment_retries') {
+          this.maxRetries = parseInt(setting.setting_value as string);
+        } else if (setting.setting_key === 'dynamic_pricing_escalation') {
+          this.dynamicPricingConfig = setting.setting_value as any;
+        }
+      });
+    }
+  }
 
   public static getInstance(): AssignmentService {
     if (!AssignmentService.instance) {
