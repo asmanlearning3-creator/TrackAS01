@@ -63,7 +63,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'demand-forecasting', label: 'Demand Forecasting', icon: TrendingUp },
           { id: 'company-registration', label: 'Company Registration', icon: FileText },
           { id: 'vehicle-registration', label: 'Vehicle Registration', icon: Truck },
-          { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },
         ];
       case 'operator':
@@ -75,7 +74,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'live-map', label: 'Live Map View', icon: MapPin },
           { id: 'invoices', label: 'Earnings & Invoices', icon: CreditCard },
           { id: 'predictive-eta', label: 'Predictive ETA', icon: Zap },
-          { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },
         ];
       case 'customer':
@@ -86,7 +84,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeTab, onTabChange, userR
           { id: 'live-map', label: 'Live Map View', icon: MapPin },
           { id: 'invoices', label: 'Invoices & Billing', icon: Download },
           { id: 'customer-tracking', label: 'Track Shipment', icon: Search },
-          { id: 'operational-flow', label: 'Operational Flow', icon: Globe },
           { id: 'settings', label: 'Settings', icon: Settings },
         ];
       default:

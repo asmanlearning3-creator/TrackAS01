@@ -143,8 +143,6 @@ const AppContent: React.FC = () => {
         return <VehicleRegistration />;
       case 'verification':
         return <VerificationDashboard />;
-      case 'operational-flow':
-        return <OperationalFlow />;
       default:
         return <Dashboard userRole={userRole!} onTabChange={handleTabChange} />;
     }
@@ -233,21 +231,25 @@ const AppContent: React.FC = () => {
 
                 <div className="mt-6 pt-6 border-t border-gray-200 text-center">
                   <p className="text-sm text-gray-600 mb-3">
-                    Don't have an account? 
+                    Don't have an account?
                     <a href="/register" className="text-blue-600 hover:text-blue-800 font-medium ml-1">
                       Register here
                     </a>
                   </p>
                   <div className="flex items-center justify-center space-x-2 text-gray-500 text-sm">
                     <span>Powered by</span>
-                    <img 
-                      src="/Vipul.png" 
-                      alt="Vipul Sharma" 
+                    <img
+                      src="/Vipul.png"
+                      alt="Vipul Sharma"
                       className="h-5 w-5 rounded-full object-cover"
                     />
                     <span className="font-medium">Vipul Sharma</span>
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-6">
+                <OperationalFlow />
               </div>
             </div>
           </div>
